@@ -204,7 +204,6 @@ def diet(df: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
 
 ### Low Priority
 
-- [ ] Code formatting tools integration (Black, isort, flake8)
 - [ ] Additional utility functions
 - [ ] Performance profiling tools
 - [ ] CI/CD pipeline improvements
