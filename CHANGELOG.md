@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integration tests for I/O operations
 - Edge case testing (NaN, empty data, etc.)
 - Cross-platform testing (Linux, macOS, Windows)
-- Python 3.8+ compatibility testing
+- Python 3.10+ compatibility testing
 
 ### Infrastructure
 - PyPI-ready package structure

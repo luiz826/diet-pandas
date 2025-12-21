@@ -17,7 +17,7 @@ def print_section(title):
 
 
 def check_python_version():
-    """Check if Python version is 3.8 or higher."""
+    """Check if Python version is 3.10 or higher."""
     print_section("Checking Python Version")
 
     version = sys.version_info
@@ -27,7 +27,7 @@ def check_python_version():
         print("[OK] Python version is compatible")
         return True
     else:
-        print("[ERROR] Python 3.8+ is required")
+        print("[ERROR] Python 3.10+ is required")
         return False
 
 
