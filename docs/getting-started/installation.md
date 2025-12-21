@@ -60,7 +60,7 @@ This installs all development dependencies including:
 
 ## Requirements
 
-- **Python**: 3.8 or higher
+- **Python**: 3.10 or higher
 - **pandas**: 1.5.0 or higher
 - **numpy**: 1.20.0 or higher
 - **polars**: 0.17.0 or higher
