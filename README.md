@@ -101,6 +101,54 @@ df = dp.diet(df, aggressive=True)
 ```python
 import dietpandas as dp
 
+# CSV with fast Polars engine
+df = dp.read_csv("data.csv")
+
+# Parquet
+df = dp.read_parquet("data.parquet")
+
+# Excel
+df = dp.read_excel("data.xlsx")
+
+# JSON
+df = dp.read_json("data.json")
+
+# HDF5
+df = dp.read_hdf("data.h5", key="dataset1")
+
+# Feather
+df = dp.read_feather("data.feather")
+
+# All readers automatically optimize memory usage!
+```
+
+### 🗜️ Sparse Data Optimization
+
+For data with many repeated values (zeros, NaNs, or any repeated value):
+
+```python
+# Enable sparse optimization for columns with >90% repeated values
+df = dp.diet(df, optimize_sparse_cols=True)
+# Perfect for: binary features, indicator variables, sparse matrices
+```
+
+### 📅 DateTime Optimization
+
+Automatically optimizes datetime columns for better memory efficiency:
+
+```python
+df = pd.DataFrame({
+    'date': pd.date_range('2020-01-01', periods=1000000),
+    'value': range(1000000)
+})
+
+df_optimized = dp.diet(df, optimize_datetimes=True)
+# DateTime columns automatically optimized
+```
+
+```python
+import dietpandas as dp
+
 # CSV (with Polars acceleration)
 df = dp.read_csv("data.csv")
 

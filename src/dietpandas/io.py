@@ -204,3 +204,164 @@ def to_csv_optimized(
         df = diet(df, verbose=False)
 
     df.to_csv(filepath, **kwargs)
+
+
+def read_json(
+    filepath: Union[str, Path],
+    optimize: bool = True,
+    aggressive: bool = False,
+    categorical_threshold: float = 0.5,
+    verbose: bool = False,
+    **kwargs,
+) -> pd.DataFrame:
+    """
+    Reads a JSON file and returns an optimized Pandas DataFrame.
+
+    Args:
+        filepath: Path to JSON file
+        optimize: If True, apply diet optimization after reading (default: True)
+        aggressive: If True, use aggressive optimization (float16, etc.)
+        categorical_threshold: Threshold for converting objects to categories
+        verbose: If True, print memory reduction statistics
+        **kwargs: Additional arguments passed to pandas.read_json
+
+    Returns:
+        Optimized pandas DataFrame
+
+    Examples:
+        >>> df = read_json("data.json")
+        🥗 Diet Complete: Memory reduced by 45.2%
+    """
+    filepath = str(filepath)
+    pd_df = pd.read_json(filepath, **kwargs)
+
+    if optimize:
+        return diet(
+            pd_df,
+            verbose=verbose,
+            aggressive=aggressive,
+            categorical_threshold=categorical_threshold,
+        )
+
+    return pd_df
+
+
+def read_hdf(
+    filepath: Union[str, Path],
+    key: str,
+    optimize: bool = True,
+    aggressive: bool = False,
+    categorical_threshold: float = 0.5,
+    verbose: bool = False,
+    **kwargs,
+) -> pd.DataFrame:
+    """
+    Reads an HDF5 file and returns an optimized Pandas DataFrame.
+
+    Args:
+        filepath: Path to HDF5 file
+        key: Group identifier in the HDF5 file
+        optimize: If True, apply diet optimization after reading (default: True)
+        aggressive: If True, use aggressive optimization (float16, etc.)
+        categorical_threshold: Threshold for converting objects to categories
+        verbose: If True, print memory reduction statistics
+        **kwargs: Additional arguments passed to pandas.read_hdf
+
+    Returns:
+        Optimized pandas DataFrame
+
+    Examples:
+        >>> df = read_hdf("data.h5", key="dataset1")
+        🥗 Diet Complete: Memory reduced by 52.1%
+    """
+    filepath = str(filepath)
+    pd_df = pd.read_hdf(filepath, key=key, **kwargs)
+
+    if optimize:
+        return diet(
+            pd_df,
+            verbose=verbose,
+            aggressive=aggressive,
+            categorical_threshold=categorical_threshold,
+        )
+
+    return pd_df
+
+
+def read_feather(
+    filepath: Union[str, Path],
+    optimize: bool = True,
+    aggressive: bool = False,
+    categorical_threshold: float = 0.5,
+    verbose: bool = False,
+    **kwargs,
+) -> pd.DataFrame:
+    """
+    Reads a Feather file and returns an optimized Pandas DataFrame.
+
+    Feather is a fast, lightweight columnar data format.
+
+    Args:
+        filepath: Path to Feather file
+        optimize: If True, apply diet optimization after reading (default: True)
+        aggressive: If True, use aggressive optimization (float16, etc.)
+        categorical_threshold: Threshold for converting objects to categories
+        verbose: If True, print memory reduction statistics
+        **kwargs: Additional arguments passed to pandas.read_feather
+
+    Returns:
+        Optimized pandas DataFrame
+
+    Examples:
+        >>> df = read_feather("data.feather")
+        🥗 Diet Complete: Memory reduced by 38.7%
+    """
+    filepath = str(filepath)
+    pd_df = pd.read_feather(filepath, **kwargs)
+
+    if optimize:
+        return diet(
+            pd_df,
+            verbose=verbose,
+            aggressive=aggressive,
+            categorical_threshold=categorical_threshold,
+        )
+
+    return pd_df
+
+
+def to_parquet_optimized(
+    df: pd.DataFrame, filepath: Union[str, Path], optimize_before_save: bool = True, **kwargs
+) -> None:
+    """
+    Saves a DataFrame to Parquet format, optionally optimizing it first.
+
+    Args:
+        df: DataFrame to save
+        filepath: Path where Parquet file will be saved
+        optimize_before_save: If True, optimize the DataFrame before saving
+        **kwargs: Additional arguments passed to pandas.to_parquet
+    """
+    if optimize_before_save:
+        df = diet(df, verbose=False)
+
+    df.to_parquet(filepath, **kwargs)
+
+
+def to_feather_optimized(
+    df: pd.DataFrame, filepath: Union[str, Path], optimize_before_save: bool = True, **kwargs
+) -> None:
+    """
+    Saves a DataFrame to Feather format, optionally optimizing it first.
+
+    Args:
+        df: DataFrame to save
+        filepath: Path where Feather file will be saved
+        optimize_before_save: If True, optimize the DataFrame before saving
+        **kwargs: Additional arguments passed to pandas.to_feather
+    """
+    if optimize_before_save:
+        df = diet(df, verbose=False)
+
+    df.to_feather(filepath, **kwargs)
+
