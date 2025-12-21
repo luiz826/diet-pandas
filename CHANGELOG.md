@@ -5,6 +5,20 @@ All notable changes to Diet Pandas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-12-21
+
+### Added
+- **Documentation Site**: Complete documentation website at https://luiz826.github.io/diet-pandas/
+  - Getting Started guides (Installation, Quick Start)
+  - User Guide (Basic Usage, File I/O, Advanced, Memory Reports)
+  - API Reference with auto-generated docs
+  - Performance Benchmarks
+  - Changelog, Contributing, and License pages
+
+### Fixed
+- GitHub Actions workflow for documentation deployment
+- CI now properly installs package before building docs
+
 ## [0.2.0] - 2025-12-21
 
 ### Added

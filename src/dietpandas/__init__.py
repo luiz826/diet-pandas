@@ -8,7 +8,7 @@ without losing information, by intelligently downcasting numeric types and
 converting repetitive strings to categories.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 from .core import (
     diet,
