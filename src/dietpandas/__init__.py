@@ -8,20 +8,19 @@ without losing information, by intelligently downcasting numeric types and
 converting repetitive strings to categories.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 from .core import (
     diet,
-    optimize_int,
-    optimize_float,
-    optimize_obj,
     get_memory_report,
+    optimize_float,
+    optimize_int,
+    optimize_obj,
 )
-
 from .io import (
     read_csv,
-    read_parquet,
     read_excel,
+    read_parquet,
     to_csv_optimized,
 )
 
@@ -32,7 +31,6 @@ __all__ = [
     "optimize_float",
     "optimize_obj",
     "get_memory_report",
-    
     # IO functions
     "read_csv",
     "read_parquet",
