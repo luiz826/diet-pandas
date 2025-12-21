@@ -102,16 +102,18 @@ def optimize_obj(series: pd.Series, categorical_threshold: float = 0.5) -> pd.Se
 def optimize_datetime(series: pd.Series) -> pd.Series:
     """
     Optimizes datetime columns by converting to more efficient datetime64 types.
-    
-    For datetime columns, attempts to use more memory-efficient representations:\n    - If all datetimes are dates (no time component), suggests conversion
+
+    For datetime columns, attempts to use more memory-efficient
+    representations:
+    - If all datetimes are dates (no time component), suggests conversion
     - Removes unnecessary precision (e.g., nanosecond to microsecond)
-    
+
     Args:
         series: A pandas Series with datetime64 dtype
-        
+
     Returns:
         Optimized Series with more efficient datetime representation
-        
+
     Examples:
         >>> dates = pd.Series(pd.date_range('2020-01-01', periods=100))
         >>> optimized = optimize_datetime(dates)
@@ -122,35 +124,35 @@ def optimize_datetime(series: pd.Series) -> pd.Series:
         if series.dt.tz is not None:
             # Keep timezone but note that tz-naive uses less memory
             pass
-        
+
         # Pandas datetime64[ns] is already quite efficient
         # The main optimization is ensuring it's in the right format
         return series
-    
+
     # Try to convert to datetime if it's an object
-    if series.dtype == 'object':
+    if series.dtype == "object":
         try:
-            return pd.to_datetime(series, errors='coerce')
-        except:
+            return pd.to_datetime(series, errors="coerce")
+        except Exception:
             return series
-    
+
     return series
 
 
 def optimize_sparse(series: pd.Series, sparse_threshold: float = 0.9) -> pd.Series:
     """
     Converts series to sparse format if it has many repeated values (especially zeros/NaNs).
-    
+
     Sparse arrays are highly memory-efficient when a series contains mostly one value.
     Common for binary features, indicator variables, or data with many missing values.
-    
+
     Args:
         series: A pandas Series
         sparse_threshold: If most common value appears >= threshold% of time, use sparse
-        
+
     Returns:
         Optimized Series (sparse if beneficial, otherwise unchanged)
-        
+
     Examples:
         >>> s = pd.Series([0, 0, 1, 0, 0, 0, 2, 0, 0, 0])
         >>> optimized = optimize_sparse(s)
@@ -159,27 +161,27 @@ def optimize_sparse(series: pd.Series, sparse_threshold: float = 0.9) -> pd.Seri
     """
     if len(series) == 0:
         return series
-    
+
     # Check if already sparse
     if isinstance(series.dtype, pd.SparseDtype):
         return series
-    
+
     # Calculate the most common value's frequency
     value_counts = series.value_counts(dropna=False)
     if len(value_counts) == 0:
         return series
-    
+
     most_common_freq = value_counts.iloc[0] / len(series)
-    
+
     # If one value dominates, convert to sparse
     if most_common_freq >= sparse_threshold:
         try:
             fill_value = value_counts.index[0]
             return series.astype(pd.SparseDtype(series.dtype, fill_value=fill_value))
-        except:
+        except Exception:
             # If conversion fails, return original
             return series
-    
+
     return series
 
 
@@ -221,7 +223,7 @@ def diet(
         >>> optimized = diet(df)
         🥗 Diet Complete: Memory reduced by 62.5%
            0.00MB -> 0.00MB
-           
+
         >>> # Enable sparse optimization for data with many zeros
         >>> df = pd.DataFrame({'binary': [0, 0, 1, 0, 0, 0, 0, 0]})
         >>> optimized = diet(df, optimize_sparse_cols=True)

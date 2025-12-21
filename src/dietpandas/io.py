@@ -364,4 +364,3 @@ def to_feather_optimized(
         df = diet(df, verbose=False)
 
     df.to_feather(filepath, **kwargs)
-
