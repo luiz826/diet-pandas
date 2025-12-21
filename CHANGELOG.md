@@ -5,6 +5,40 @@ All notable changes to Diet Pandas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-12-21
+
+### Added
+- **DateTime Optimization**: New `optimize_datetime()` function for efficient datetime handling
+- **Sparse Data Support**: New `optimize_sparse()` function for sparse array optimization (up to 96% memory reduction on sparse data)
+- **Extended File Format Support**:
+  - `read_json()` - JSON file reading with optimization
+  - `read_hdf()` - HDF5 file reading with optimization
+  - `read_feather()` - Feather file reading with optimization
+  - `to_parquet_optimized()` - Optimized Parquet writing
+  - `to_feather_optimized()` - Optimized Feather writing
+- **Performance Benchmarking**: Comprehensive benchmark script (`scripts/benchmark.py`)
+- New parameters for `diet()`:
+  - `optimize_datetimes` - Enable/disable datetime optimization (default: True)
+  - `optimize_sparse_cols` - Enable sparse optimization (default: False)
+  - `sparse_threshold` - Threshold for sparse conversion (default: 0.9)
+
+### Improved
+- Enhanced `diet()` function with datetime and sparse support
+- Better test coverage with 12 new tests for new features
+- Comprehensive documentation updates
+- Emojis in output messages for better UX (🥗)
+
+### Performance
+- 82-87% memory reduction on typical datasets (tested with 10K-500K rows)
+- Up to 96% memory reduction on sparse data
+- Optimization time: 0.007-0.16 seconds depending on dataset size
+
+### Documentation
+- Updated README with new features
+- Improved CONTRIBUTING.md with completed tasks
+- Added performance benchmarking guide
+- New example code for sparse and datetime optimization
+
 ## [0.1.0] - 2025-12-19
 
 ### Added

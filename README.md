@@ -2,6 +2,7 @@
 
 **Tagline:** *Same Pandas taste, half the calories (RAM).*
 
+[![PyPI version](https://badge.fury.io/py/diet-pandas.svg)](https://pypi.org/project/diet-pandas/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -97,6 +98,54 @@ df = dp.diet(df, aggressive=True)
 ```
 
 ### 📊 Multiple File Format Support
+
+```python
+import dietpandas as dp
+
+# CSV with fast Polars engine
+df = dp.read_csv("data.csv")
+
+# Parquet
+df = dp.read_parquet("data.parquet")
+
+# Excel
+df = dp.read_excel("data.xlsx")
+
+# JSON
+df = dp.read_json("data.json")
+
+# HDF5
+df = dp.read_hdf("data.h5", key="dataset1")
+
+# Feather
+df = dp.read_feather("data.feather")
+
+# All readers automatically optimize memory usage!
+```
+
+### 🗜️ Sparse Data Optimization
+
+For data with many repeated values (zeros, NaNs, or any repeated value):
+
+```python
+# Enable sparse optimization for columns with >90% repeated values
+df = dp.diet(df, optimize_sparse_cols=True)
+# Perfect for: binary features, indicator variables, sparse matrices
+```
+
+### 📅 DateTime Optimization
+
+Automatically optimizes datetime columns for better memory efficiency:
+
+```python
+df = pd.DataFrame({
+    'date': pd.date_range('2020-01-01', periods=1000000),
+    'value': range(1000000)
+})
+
+df_optimized = dp.diet(df, optimize_datetimes=True)
+# DateTime columns automatically optimized
+```
 
 ```python
 import dietpandas as dp

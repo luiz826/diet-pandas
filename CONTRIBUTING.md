@@ -186,25 +186,16 @@ def diet(df: pd.DataFrame, verbose: bool = True) -> pd.DataFrame:
 
 ## 🎯 Areas for Contribution
 
-### High Priority
-
-- [ ] Additional file format support (JSON, HDF5, Feather)
-- [ ] DateTime optimization
-- [ ] Sparse data handling
-- [ ] Performance benchmarks
-
-### Medium Priority
 
 - [ ] More comprehensive tests
 - [ ] Additional optimization strategies
 - [ ] Documentation improvements
 - [ ] Example notebooks
-
-### Low Priority
-
-- [ ] Code formatting tools integration
+- [ ] Automated backend selection based on data size
+- [ ] Integration with Dask/Modin for distributed computing
 - [ ] Additional utility functions
 - [ ] Performance profiling tools
+- [ ] CI/CD pipeline improvements
 
 ## 🔍 Code Review Process
 
