@@ -31,7 +31,7 @@ import dietpandas as dp
 # 1. Drop-in replacement for pandas.read_csv
 # Loads faster and uses less RAM automatically
 df = dp.read_csv("huge_dataset.csv")
-# 🥗 Diet Complete: Memory reduced by 67.3%
+# Diet Complete: Memory reduced by 67.3%
 #    450.00MB -> 147.15MB
 
 # 2. Or optimize an existing DataFrame
@@ -46,7 +46,7 @@ print(df_heavy.info())
 # revenue    float64 (8 bytes each)
 
 df_light = dp.diet(df_heavy)
-# 🥗 Diet Complete: Memory reduced by 62.5%
+# Diet Complete: Memory reduced by 62.5%
 #    0.13MB -> 0.05MB
 
 print(df_light.info())
@@ -93,7 +93,7 @@ df = dp.diet(df, aggressive=False)
 
 # Keto mode: float64 -> float16 (extreme compression, some precision loss)
 df = dp.diet(df, aggressive=True)
-# 🥗 Diet Complete: Memory reduced by 81.2%
+# Diet Complete: Memory reduced by 81.2%
 ```
 
 ### 📊 Multiple File Format Support
@@ -153,7 +153,7 @@ print(df.memory_usage(deep=True).sum() / 1e9)  # 2.3 GB
 # Diet Pandas
 df = dp.read_csv("sales_data.csv")  # 0.8 GB, 8 seconds
 print(df.memory_usage(deep=True).sum() / 1e9)  # 0.8 GB
-# 🥗 Diet Complete: Memory reduced by 65.2%
+# Diet Complete: Memory reduced by 65.2%
 #    2300.00MB -> 800.00MB
 ```
 
@@ -188,7 +188,7 @@ df = dp.diet(df)  # Now optimize
 
 ```python
 df = dp.diet(df, verbose=True)
-# 🥗 Diet Complete: Memory reduced by 67.3%
+# Diet Complete: Memory reduced by 67.3%
 #    450.00MB -> 147.15MB
 ```
 
@@ -330,8 +330,8 @@ MIT License - see LICENSE file for details.
 
 ## 📬 Contact
 
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Issues: [GitHub Issues](https://github.com/yourusername/diet-pandas/issues)
+- GitHub: [@luiz826](https://github.com/luiz826)
+- Issues: [GitHub Issues](https://github.com/luiz826/diet-pandas/issues)
 
 ---
 
