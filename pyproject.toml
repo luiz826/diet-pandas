@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diet-pandas"
+version = "0.1.0"
+description = "Automated memory optimization for Pandas DataFrames. Same Pandas taste, half the calories (RAM)."
+readme = "README.md"
+authors = [
+  { name = "Luiz Fernando", email = "luizfernando1012000@gmail.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "pandas>=1.5.0",
+    "numpy>=1.20.0",
+    "polars>=0.17.0"
+]
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "openpyxl>=3.0.0",
+    "pyarrow>=10.0.0",
+]
+excel = [
+    "openpyxl>=3.0.0",
+]
+parquet = [
+    "pyarrow>=10.0.0",
+]
+all = [
+    "openpyxl>=3.0.0",
+    "pyarrow>=10.0.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/luiz826/diet-pandas"
+"Bug Tracker" = "https://github.com/luiz826/diet-pandas/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
