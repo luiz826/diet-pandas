@@ -1,4 +1,4 @@
-.PHONY: help install test clean run-examples build publish
+.PHONY: help install test clean run-examples build publish format lint check
 
 help:
 	@echo "Diet Pandas - Make Commands"
@@ -8,6 +8,9 @@ help:
 	@echo "  make test          - Run all tests"
 	@echo "  make test-verbose  - Run tests with verbose output"
 	@echo "  make coverage      - Run tests with coverage report"
+	@echo "  make format        - Format code with Black and isort"
+	@echo "  make lint          - Lint code with Flake8"
+	@echo "  make check         - Format and lint code"
 	@echo "  make run-examples  - Run example scripts"
 	@echo "  make clean         - Remove build artifacts"
 	@echo "  make build         - Build distribution packages"
@@ -31,6 +34,16 @@ run-examples:
 
 run-demo:
 	python scripts/demo.py
+
+format:
+	black src/ tests/ scripts/
+	isort src/ tests/ scripts/
+
+lint:
+	flake8 src/ tests/ scripts/
+
+check: format lint
+	@echo "Code quality checks complete!"
 
 clean:
 	rm -rf build/
