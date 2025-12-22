@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "diet-pandas"
-version = "0.2.1"
+version = "0.2.2"
 description = "Automated memory optimization for Pandas DataFrames. Same Pandas taste, half the calories (RAM)."
 readme = "README.md"
 authors = [
