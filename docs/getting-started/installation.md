@@ -72,7 +72,7 @@ After installation, verify it works:
 ```python
 import dietpandas as dp
 print(dp.__version__)
-# Should print: 0.2.0
+# Should print: 0.2.2
 ```
 
 ## Upgrading
