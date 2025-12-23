@@ -194,7 +194,8 @@ def _read_csv_chunked(
     **kwargs,
 ) -> pd.DataFrame:
     """Internal function for chunked CSV reading."""
-    from .schema import apply_schema, load_schema, save_schema as save_schema_func
+    from .schema import apply_schema, load_schema
+    from .schema import save_schema as save_schema_func
 
     filepath = str(filepath)
     chunks = []
