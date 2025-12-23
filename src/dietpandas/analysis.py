@@ -113,8 +113,7 @@ def analyze(
                             optimized_memory = sparse_optimized.memory_usage(deep=True)
                         sparse_pct = sparse_threshold * 100
                         reasoning += (
-                            f" Sparse format recommended "
-                            f"({sparse_pct}% values are identical)."
+                            f" Sparse format recommended " f"({sparse_pct}% values are identical)."
                         )
             except Exception:
                 pass
@@ -256,9 +255,7 @@ def get_optimization_summary(df: pd.DataFrame, **kwargs) -> dict:
     total_current = analysis["current_memory_mb"].sum()
     total_optimized = analysis["optimized_memory_mb"].sum()
     total_savings = analysis["savings_mb"].sum()
-    total_savings_percent = (
-        (total_savings / total_current * 100) if total_current > 0 else 0
-    )
+    total_savings_percent = (total_savings / total_current * 100) if total_current > 0 else 0
     optimizable_columns = (analysis["savings_mb"] > 0).sum()
 
     return {
