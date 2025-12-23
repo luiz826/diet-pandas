@@ -104,9 +104,7 @@ class TestAnalyze:
 
     def test_analyze_with_nan_columns(self):
         """Test that analyze skips all-NaN columns."""
-        df = pd.DataFrame(
-            {"good_col": [1, 2, 3], "nan_col": [np.nan, np.nan, np.nan]}
-        )
+        df = pd.DataFrame({"good_col": [1, 2, 3], "nan_col": [np.nan, np.nan, np.nan]})
 
         result = analyze(df)
 
@@ -266,9 +264,7 @@ class TestAnalysisIntegration:
         if summary["total_savings_percent"] > 20:
             # Step 3: Optimize
             optimized_df = dp.diet(df, verbose=False)
-            assert optimized_df.memory_usage(deep=True).sum() < df.memory_usage(
-                deep=True
-            ).sum()
+            assert optimized_df.memory_usage(deep=True).sum() < df.memory_usage(deep=True).sum()
 
 
 if __name__ == "__main__":

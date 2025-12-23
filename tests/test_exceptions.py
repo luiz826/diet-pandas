@@ -50,9 +50,7 @@ class TestWarningsInDiet:
 
     def test_warn_on_all_nan_column(self):
         """Test warning for all-NaN columns."""
-        df = pd.DataFrame(
-            {"good_col": [1, 2, 3], "nan_col": [np.nan, np.nan, np.nan]}
-        )
+        df = pd.DataFrame({"good_col": [1, 2, 3], "nan_col": [np.nan, np.nan, np.nan]})
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -160,8 +158,7 @@ class TestWarningMessages:
 
             # Find high cardinality warning
             hc_warnings = [
-                warning for warning in w
-                if issubclass(warning.category, HighCardinalityWarning)
+                warning for warning in w if issubclass(warning.category, HighCardinalityWarning)
             ]
             assert len(hc_warnings) > 0
             # Should contain percentage
@@ -177,8 +174,7 @@ class TestWarningMessages:
 
             # Find precision loss warning
             pl_warnings = [
-                warning for warning in w
-                if issubclass(warning.category, PrecisionLossWarning)
+                warning for warning in w if issubclass(warning.category, PrecisionLossWarning)
             ]
             assert len(pl_warnings) > 0
             # Should mention column name and suggest force_aggressive
@@ -188,9 +184,7 @@ class TestWarningMessages:
 
     def test_optimization_skipped_message_includes_column(self):
         """Test that optimization skipped warning includes column name."""
-        df = pd.DataFrame(
-            {"good_col": [1, 2, 3], "bad_col": [np.nan, np.nan, np.nan]}
-        )
+        df = pd.DataFrame({"good_col": [1, 2, 3], "bad_col": [np.nan, np.nan, np.nan]})
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
@@ -198,8 +192,7 @@ class TestWarningMessages:
 
             # Find optimization skipped warning
             os_warnings = [
-                warning for warning in w
-                if issubclass(warning.category, OptimizationSkippedWarning)
+                warning for warning in w if issubclass(warning.category, OptimizationSkippedWarning)
             ]
             assert len(os_warnings) > 0
             assert "bad_col" in str(os_warnings[0].message)
