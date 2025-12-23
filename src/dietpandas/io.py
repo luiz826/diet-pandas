@@ -6,11 +6,11 @@ then converting to optimized Pandas DataFrames.
 """
 
 import os
-import psutil
 from pathlib import Path
 from typing import Union
 
 import pandas as pd
+import psutil
 
 try:
     import polars as pl

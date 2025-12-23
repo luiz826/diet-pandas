@@ -148,7 +148,8 @@ class TestReadCsvAutoChunking:
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as schema_f:
             schema_path = schema_f.name
-            Path(schema_path).unlink()  # Delete it so we can test creation
+        # Close file before unlinking (Windows compatibility)
+        Path(schema_path).unlink()  # Delete it so we can test creation
 
         try:
             df.to_csv(csv_path, index=False)
@@ -244,7 +245,8 @@ class TestReadCsvChunkingWorkflow:
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as schema_f:
             schema_path = schema_f.name
-            Path(schema_path).unlink()
+        # Close file before unlinking (Windows compatibility)
+        Path(schema_path).unlink()
 
         try:
             df.to_csv(csv_path, index=False)
