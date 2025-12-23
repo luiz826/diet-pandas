@@ -5,6 +5,23 @@ All notable changes to Diet Pandas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-12-23
+
+### Added
+- **Pull Request Template**: Comprehensive PR template for consistent contributions
+  - Type of change checkboxes
+  - Testing checklist
+  - Performance impact section
+  - Breaking changes documentation
+- **Issue Templates**: Bug report, feature request, and custom issue templates
+- **Security Policy**: SECURITY.md with vulnerability reporting guidelines
+- **Code of Conduct**: Community guidelines for respectful collaboration
+
+### Documentation
+- Enhanced contribution workflow with PR template
+- Clear security reporting process
+- Community standards and expectations defined
+
 ## [0.3.0] - 2025-12-23
 
 ### Added
