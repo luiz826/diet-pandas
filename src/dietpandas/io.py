@@ -62,8 +62,10 @@ def read_csv(
         verbose: If True, print memory reduction statistics
         use_polars: If True and Polars is available, use it for parsing (default: True)
         schema_path: Optional path to schema file for consistent typing
-        save_schema: If True, save schema after optimization (only with chunked reading)
-        memory_threshold: Use chunked reading if estimated memory > threshold * available (default: 0.7)
+        save_schema: If True, save schema after optimization
+            (only with chunked reading)
+        memory_threshold: Use chunked reading if estimated memory >
+            threshold * available (default: 0.7)
         auto_chunk: If True, automatically use chunked reading for large files (default: True)
         chunksize: Number of rows per chunk when using chunked reading (default: 100,000)
         **kwargs: Additional arguments passed to the CSV reader
