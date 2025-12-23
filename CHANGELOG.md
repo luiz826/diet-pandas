@@ -5,6 +5,43 @@ All notable changes to Diet Pandas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-12-23
+
+### Added
+- **Automatic Chunked Reading**: Memory-aware CSV reading
+  - Automatically switches to chunked reading for large files
+  - Estimates file size and available memory with `psutil`
+  - Configurable `memory_threshold` (default: 70% of available RAM)
+  - `auto_chunk` parameter to enable/disable (default: True)
+  - Works seamlessly with schema persistence
+  - Prevents out-of-memory errors on large datasets
+
+- **Schema Persistence**: Save and reuse optimization schemas
+  - `save_schema()` - Save DataFrame schema to JSON
+  - `load_schema()` - Load schema from JSON file
+  - `apply_schema()` - Apply saved schema to DataFrame
+  - `auto_schema_path()` - Generate schema file paths automatically
+  - Skip re-analysis on repeated loads for faster processing
+  - Integration with `read_csv()` via `schema_path` and `save_schema` parameters
+  - 16 comprehensive tests for schema operations
+
+### Improved
+- Enhanced `read_csv()` with automatic memory management
+- Added `psutil>=5.9.0` dependency for memory monitoring
+- Better handling of large files with automatic chunking
+- Schema-based optimization eliminates redundant analysis
+
+### Performance
+- Automatic memory-aware chunking prevents out-of-memory errors
+- Schema reuse eliminates redundant analysis overhead
+- Faster repeated loads when using schema persistence
+
+### Tests
+- 139 total tests passing (23 new schema/chunking tests)
+- Cross-platform compatibility (Windows, macOS, Linux)
+- Fixed Windows file permission issues in tests
+- All code formatted with black and verified with flake8/isort
+
 ## [0.2.2] - 2025-12-22
 
 ### Fixed
