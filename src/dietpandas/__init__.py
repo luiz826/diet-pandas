@@ -10,14 +10,27 @@ converting repetitive strings to categories.
 
 __version__ = "0.2.2"
 
+from .analysis import (
+    analyze,
+    estimate_memory_reduction,
+    get_optimization_summary,
+)
 from .core import (
     diet,
     get_memory_report,
+    optimize_bool,
     optimize_datetime,
     optimize_float,
     optimize_int,
     optimize_obj,
     optimize_sparse,
+)
+from .exceptions import (
+    DietPandasWarning,
+    HighCardinalityWarning,
+    OptimizationError,
+    OptimizationSkippedWarning,
+    PrecisionLossWarning,
 )
 from .io import (
     read_csv,
@@ -37,9 +50,20 @@ __all__ = [
     "optimize_int",
     "optimize_float",
     "optimize_obj",
+    "optimize_bool",
     "optimize_datetime",
     "optimize_sparse",
     "get_memory_report",
+    # Analysis functions
+    "analyze",
+    "get_optimization_summary",
+    "estimate_memory_reduction",
+    # Exceptions and warnings
+    "DietPandasWarning",
+    "HighCardinalityWarning",
+    "PrecisionLossWarning",
+    "OptimizationSkippedWarning",
+    "OptimizationError",
     # IO functions
     "read_csv",
     "read_parquet",

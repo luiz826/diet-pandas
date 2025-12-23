@@ -5,8 +5,16 @@ This module contains the core functions for optimizing Pandas DataFrame memory u
 by intelligently downcasting numeric types and converting strings to categories.
 """
 
+import warnings
+
 import numpy as np
 import pandas as pd
+
+from .exceptions import (
+    HighCardinalityWarning,
+    OptimizationSkippedWarning,
+    PrecisionLossWarning,
+)
 
 
 def optimize_int(series: pd.Series) -> pd.Series:
@@ -276,6 +284,7 @@ def diet(
     skip_columns: list = None,
     force_categorical: list = None,
     force_aggressive: list = None,
+    warn_on_issues: bool = False,
 ) -> pd.DataFrame:
     """
     Main function to optimize DataFrame memory usage.
@@ -301,6 +310,7 @@ def diet(
         skip_columns: List of column names to skip optimization (default: None)
         force_categorical: List of column names to force categorical conversion (default: None)
         force_aggressive: List of column names to force aggressive optimization (default: None)
+        warn_on_issues: If True, emit warnings for potential issues (default: False)
 
     Returns:
         Optimized DataFrame with reduced memory usage
@@ -319,6 +329,9 @@ def diet(
 
         >>> # Use aggressive mode only for specific columns
         >>> df = diet(df, force_aggressive=['approximation_field'])
+
+        >>> # Enable warnings for potential issues
+        >>> df = diet(df, warn_on_issues=True)
     """
     if not inplace:
         df = df.copy()
@@ -339,10 +352,25 @@ def diet(
 
         # Skip columns with all NaN values
         if df[col].isna().all():
+            if warn_on_issues:
+                warnings.warn(
+                    f"Column '{col}' contains only NaN values. Skipping optimization.",
+                    OptimizationSkippedWarning,
+                    stacklevel=2,
+                )
             continue
 
         # Check if column should use aggressive mode
         use_aggressive = aggressive or (col in force_aggressive)
+
+        # Warn about aggressive mode precision loss
+        if use_aggressive and np.issubdtype(dtype, np.floating) and warn_on_issues:
+            warnings.warn(
+                f"Column '{col}': Aggressive mode (float16) may cause precision loss. "
+                f"Consider using force_aggressive=['{col}'] only if acceptable.",
+                PrecisionLossWarning,
+                stacklevel=2,
+            )
 
         # Force categorical conversion if requested
         if col in force_categorical:
@@ -379,6 +407,17 @@ def diet(
 
         # Optimize Objects (Strings)
         elif dtype == "object":
+            # Warn about high cardinality
+            if warn_on_issues:
+                unique_ratio = df[col].nunique() / len(df[col]) if len(df[col]) > 0 else 0
+                if unique_ratio >= categorical_threshold:
+                    warnings.warn(
+                        f"Column '{col}' has high cardinality ({unique_ratio:.1%} unique values). "
+                        f"Not suitable for category conversion. Consider adding to skip_columns.",
+                        HighCardinalityWarning,
+                        stacklevel=2,
+                    )
+
             df[col] = optimize_obj(df[col], categorical_threshold=categorical_threshold)
 
     end_mem = df.memory_usage(deep=True).sum()

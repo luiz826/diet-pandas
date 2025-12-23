@@ -191,6 +191,70 @@ df = dp.diet(
 )
 ```
 
+### 🔍 Pre-Flight Analysis
+
+**NEW in v0.3.0!** Analyze your DataFrame before optimization to see what changes will be made:
+
+```python
+import pandas as pd
+import dietpandas as dp
+
+df = pd.DataFrame({
+    'id': range(1000),
+    'amount': [1.1, 2.2, 3.3] * 333 + [1.1],
+    'category': ['A', 'B', 'C'] * 333 + ['A']
+})
+
+# Analyze without modifying the DataFrame
+analysis = dp.analyze(df)
+print(analysis)
+#
+#      column current_dtype recommended_dtype  current_memory_mb  optimized_memory_mb  savings_mb  savings_percent                  reasoning
+# 0        id         int64             uint16               0.008                0.002       0.006            75.0    Integer range 0-999 fits in uint16
+# 1    amount       float64            float32               0.008                0.004       0.004            50.0      Standard float optimization
+# 2  category        object           category               0.057                0.001       0.056            98.2  Low cardinality (3 unique values)
+
+# Get summary statistics
+summary = dp.get_optimization_summary(analysis)
+print(summary)
+# {
+#     'total_columns': 3,
+#     'optimizable_columns': 3,
+#     'current_memory_mb': 0.073,
+#     'optimized_memory_mb': 0.007,
+#     'total_savings_mb': 0.066,
+#     'total_savings_percent': 90.4
+# }
+
+# Quick estimate without detailed analysis
+reduction_pct = dp.estimate_memory_reduction(df)
+print(f"Estimated reduction: {reduction_pct:.1f}%")
+# Estimated reduction: 90.4%
+```
+
+### ⚠️ Smart Warnings
+
+**NEW in v0.3.0!** Get helpful warnings about potential issues:
+
+```python
+import dietpandas as dp
+
+df = pd.DataFrame({
+    'id': range(10000),  # High cardinality
+    'value': [1.123456789] * 10000,  # Will lose precision in float16
+    'empty': [None] * 10000  # All NaN column
+})
+
+# Warnings are enabled by default
+df_optimized = dp.diet(df, aggressive=True, warn_on_issues=True)
+# ⚠️  Warning: Column 'empty' is entirely NaN - consider dropping it
+# ⚠️  Warning: Column 'id' has high cardinality (100.0%) - may not benefit from categorical
+# ⚠️  Warning: Aggressive mode on column 'value' may lose precision (float64 -> float16)
+
+# Disable warnings if you know what you're doing
+df_optimized = dp.diet(df, aggressive=True, warn_on_issues=False)
+```
+
 ```python
 import dietpandas as dp
 
