@@ -83,7 +83,9 @@ nav:
       - Memory Reports: guide/memory-reports.md
   - API Reference:
       - Core Functions: api/core.md
+      - Analysis Functions: api/analysis.md
       - I/O Functions: api/io.md
+      - Exceptions & Warnings: api/exceptions.md
   - Performance:
       - Benchmarks: performance/benchmarks.md
   - About:
