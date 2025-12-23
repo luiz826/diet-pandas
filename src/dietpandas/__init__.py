@@ -43,6 +43,12 @@ from .io import (
     to_feather_optimized,
     to_parquet_optimized,
 )
+from .schema import (
+    apply_schema,
+    auto_schema_path,
+    load_schema,
+    save_schema,
+)
 
 __all__ = [
     # Core optimization functions
@@ -74,4 +80,9 @@ __all__ = [
     "to_csv_optimized",
     "to_parquet_optimized",
     "to_feather_optimized",
+    # Schema functions
+    "save_schema",
+    "load_schema",
+    "apply_schema",
+    "auto_schema_path",
 ]
