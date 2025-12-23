@@ -143,32 +143,34 @@ def optimize_bool(series: pd.Series) -> pd.Series:
     if np.issubdtype(series.dtype, np.integer):
         if set(unique_vals).issubset({0, 1}):
             # Convert to bool, preserving NaN
-            return series.astype('boolean')  # Use nullable boolean type
+            return series.astype("boolean")  # Use nullable boolean type
 
     # Check for string boolean representations
     if series.dtype == "object":
         # Convert to lowercase for case-insensitive comparison
         unique_vals_lower = set(str(v).lower() for v in unique_vals)
 
-        # Check various boolean representations
+        # Check various boolean representations (True values, False values)
         bool_patterns = [
-            {'true', 'false'},
-            {'yes', 'no'},
-            {'y', 'n'},
-            {'1', '0'},
-            {'t', 'f'},
+            ({"true"}, {"false"}),
+            ({"yes"}, {"no"}),
+            ({"y"}, {"n"}),
+            ({"1"}, {"0"}),
+            ({"t"}, {"f"}),
         ]
 
-        for pattern in bool_patterns:
-            if unique_vals_lower.issubset(pattern):
+        for true_vals, false_vals in bool_patterns:
+            if unique_vals_lower.issubset(true_vals | false_vals):
                 # Map to boolean
-                true_vals = {list(pattern)[0]}  # First value is True
                 try:
                     bool_series = series.apply(
-                        lambda x: True if str(x).lower() in true_vals 
-                        else (False if pd.notna(x) else None)
+                        lambda x: (
+                            True
+                            if str(x).lower() in true_vals
+                            else (False if pd.notna(x) else None)
+                        )
                     )
-                    return bool_series.astype('boolean')
+                    return bool_series.astype("boolean")
                 except Exception:
                     return series
 
@@ -353,7 +355,7 @@ def diet(
         # Optimize Booleans (check before integers)
         if optimize_bools and (np.issubdtype(dtype, np.integer) or dtype == "object"):
             optimized = optimize_bool(df[col])
-            if optimized.dtype == 'boolean' or optimized.dtype == bool:
+            if optimized.dtype == "boolean" or optimized.dtype == bool:
                 df[col] = optimized
                 continue
 

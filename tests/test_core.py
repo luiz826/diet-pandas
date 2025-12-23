@@ -335,40 +335,42 @@ class TestOptimizeBool:
         """Test that integer columns with only 0 and 1 are converted to bool."""
         s = pd.Series([0, 1, 1, 0, 1, 0], dtype="int64")
         result = optimize_bool(s)
-        assert result.dtype == 'boolean'
-        assert list(result) == [False, True, True, False, True, False]
+        assert result.dtype == "boolean"
+        assert all(result == pd.Series([False, True, True, False, True, False], dtype="boolean"))
 
     def test_optimize_string_true_false(self):
         """Test that string True/False columns are converted to bool."""
         s = pd.Series(["True", "False", "True", "False"])
         result = optimize_bool(s)
-        assert result.dtype == 'boolean'
-        assert list(result) == [True, False, True, False]
+        assert result.dtype == "boolean"
+        expected = pd.Series([True, False, True, False], dtype="boolean")
+        assert all(result == expected)
 
     def test_optimize_string_yes_no(self):
         """Test that string yes/no columns are converted to bool."""
         s = pd.Series(["yes", "no", "yes", "no"])
         result = optimize_bool(s)
-        assert result.dtype == 'boolean'
-        assert list(result) == [True, False, True, False]
+        assert result.dtype == "boolean"
+        expected = pd.Series([True, False, True, False], dtype="boolean")
+        assert all(result == expected)
 
     def test_optimize_string_y_n(self):
         """Test that string y/n columns are converted to bool."""
         s = pd.Series(["y", "n", "Y", "N"])
         result = optimize_bool(s)
-        assert result.dtype == 'boolean'
+        assert result.dtype == "boolean"
 
     def test_optimize_string_t_f(self):
         """Test that string t/f columns are converted to bool."""
         s = pd.Series(["t", "f", "T", "F"])
         result = optimize_bool(s)
-        assert result.dtype == 'boolean'
+        assert result.dtype == "boolean"
 
     def test_bool_with_nan_values(self):
         """Test that boolean optimization preserves NaN values."""
-        s = pd.Series([0, 1, 1, 0], dtype='int64')
+        s = pd.Series([0, 1, 1, 0], dtype="int64")
         result = optimize_bool(s)
-        assert result.dtype == 'boolean'
+        assert result.dtype == "boolean"
         assert list(result) == [False, True, True, False]
 
     def test_already_bool_unchanged(self):
@@ -393,8 +395,9 @@ class TestOptimizeBool:
         """Test case-insensitive boolean string conversion."""
         s = pd.Series(["TRUE", "false", "True", "FALSE"])
         result = optimize_bool(s)
-        assert result.dtype == 'boolean'
-        assert list(result) == [True, False, True, False]
+        assert result.dtype == "boolean"
+        expected = pd.Series([True, False, True, False], dtype="boolean")
+        assert all(result == expected)
 
 
 class TestColumnSpecificControl:
@@ -402,10 +405,12 @@ class TestColumnSpecificControl:
 
     def test_skip_columns(self):
         """Test that skip_columns prevents optimization."""
-        df = pd.DataFrame({
-            "optimize_me": pd.Series([1, 2, 3], dtype="int64"),
-            "skip_me": pd.Series([1, 2, 3], dtype="int64"),
-        })
+        df = pd.DataFrame(
+            {
+                "optimize_me": pd.Series([1, 2, 3], dtype="int64"),
+                "skip_me": pd.Series([1, 2, 3], dtype="int64"),
+            }
+        )
 
         result = diet(df, skip_columns=["skip_me"], verbose=False)
 
@@ -416,11 +421,13 @@ class TestColumnSpecificControl:
 
     def test_skip_multiple_columns(self):
         """Test skipping multiple columns."""
-        df = pd.DataFrame({
-            "col1": pd.Series([1, 2, 3], dtype="int64"),
-            "col2": pd.Series([1, 2, 3], dtype="int64"),
-            "col3": pd.Series([1, 2, 3], dtype="int64"),
-        })
+        df = pd.DataFrame(
+            {
+                "col1": pd.Series([1, 2, 3], dtype="int64"),
+                "col2": pd.Series([1, 2, 3], dtype="int64"),
+                "col3": pd.Series([1, 2, 3], dtype="int64"),
+            }
+        )
 
         result = diet(df, skip_columns=["col1", "col3"], verbose=False)
 
@@ -431,19 +438,19 @@ class TestColumnSpecificControl:
     def test_force_categorical(self):
         """Test that force_categorical converts high-cardinality columns."""
         # Create a high-cardinality column (>50% unique)
-        df = pd.DataFrame({
-            "high_card": [f"id_{i}" for i in range(100)]
-        })
+        df = pd.DataFrame({"high_card": [f"id_{i}" for i in range(100)]})
 
         result = diet(df, force_categorical=["high_card"], verbose=False)
         assert result["high_card"].dtype.name == "category"
 
     def test_force_aggressive_on_specific_column(self):
         """Test that force_aggressive applies float16 to specific columns."""
-        df = pd.DataFrame({
-            "normal": pd.Series([1.1, 2.2, 3.3], dtype="float64"),
-            "aggressive": pd.Series([1.1, 2.2, 3.3], dtype="float64"),
-        })
+        df = pd.DataFrame(
+            {
+                "normal": pd.Series([1.1, 2.2, 3.3], dtype="float64"),
+                "aggressive": pd.Series([1.1, 2.2, 3.3], dtype="float64"),
+            }
+        )
 
         result = diet(df, aggressive=False, force_aggressive=["aggressive"], verbose=False)
 
@@ -454,12 +461,14 @@ class TestColumnSpecificControl:
 
     def test_combined_controls(self):
         """Test combining skip, force_categorical, and force_aggressive."""
-        df = pd.DataFrame({
-            "skip_this": pd.Series([1, 2, 3, 4, 5], dtype="int64"),
-            "force_cat": ["A", "B", "C", "D", "E"],
-            "force_agg": pd.Series([1.1, 2.2, 3.3, 4.4, 5.5], dtype="float64"),
-            "normal": pd.Series([10, 20, 30, 40, 50], dtype="int64"),
-        })
+        df = pd.DataFrame(
+            {
+                "skip_this": pd.Series([1, 2, 3, 4, 5], dtype="int64"),
+                "force_cat": ["A", "B", "C", "D", "E"],
+                "force_agg": pd.Series([1.1, 2.2, 3.3, 4.4, 5.5], dtype="float64"),
+                "normal": pd.Series([10, 20, 30, 40, 50], dtype="int64"),
+            }
+        )
 
         result = diet(
             df,
@@ -480,23 +489,27 @@ class TestDietWithBooleanOptimization:
 
     def test_diet_optimizes_boolean_columns(self):
         """Test that diet automatically optimizes boolean-like columns."""
-        df = pd.DataFrame({
-            "bool_int": pd.Series([0, 1, 1, 0, 1], dtype="int64"),
-            "bool_str": ["yes", "no", "yes", "no", "yes"],
-            "normal_int": [10, 20, 30, 40, 50],
-        })
+        df = pd.DataFrame(
+            {
+                "bool_int": pd.Series([0, 1, 1, 0, 1], dtype="int64"),
+                "bool_str": ["yes", "no", "yes", "no", "yes"],
+                "normal_int": [10, 20, 30, 40, 50],
+            }
+        )
 
         result = diet(df, optimize_bools=True, verbose=False)
 
-        assert result["bool_int"].dtype == 'boolean'
-        assert result["bool_str"].dtype == 'boolean'
+        assert result["bool_int"].dtype == "boolean"
+        assert result["bool_str"].dtype == "boolean"
         assert result["normal_int"].dtype == np.uint8
 
     def test_diet_disable_boolean_optimization(self):
         """Test that boolean optimization can be disabled."""
-        df = pd.DataFrame({
-            "bool_int": pd.Series([0, 1, 1, 0, 1], dtype="int64"),
-        })
+        df = pd.DataFrame(
+            {
+                "bool_int": pd.Series([0, 1, 1, 0, 1], dtype="int64"),
+            }
+        )
 
         result = diet(df, optimize_bools=False, verbose=False)
 
@@ -505,9 +518,11 @@ class TestDietWithBooleanOptimization:
 
     def test_boolean_optimization_memory_savings(self):
         """Test that boolean optimization reduces memory significantly."""
-        df = pd.DataFrame({
-            "bool_col": pd.Series([0, 1] * 5000, dtype="int64"),
-        })
+        df = pd.DataFrame(
+            {
+                "bool_col": pd.Series([0, 1] * 5000, dtype="int64"),
+            }
+        )
 
         original_memory = df.memory_usage(deep=True).sum()
         result = diet(df, optimize_bools=True, verbose=False)
