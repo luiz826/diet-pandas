@@ -148,6 +148,49 @@ df_optimized = dp.diet(df, optimize_datetimes=True)
 # DateTime columns automatically optimized
 ```
 
+### ✓ Boolean Optimization
+
+Automatically detects and optimizes boolean-like columns:
+
+```python
+df = pd.DataFrame({
+    'is_active': [0, 1, 1, 0, 1],           # int64 -> boolean (87.5% memory reduction)
+    'has_data': ['yes', 'no', 'yes', 'no', 'yes'],  # object -> boolean
+    'approved': ['True', 'False', 'True', 'False', 'True']  # object -> boolean
+})
+
+df_optimized = dp.diet(df, optimize_bools=True)
+# All three columns converted to memory-efficient boolean type!
+```
+
+Supports multiple boolean representations:
+- **Numeric**: `0`, `1`
+- **Strings**: `'true'`/`'false'`, `'yes'`/`'no'`, `'y'`/`'n'`, `'t'`/`'f'`
+- Case-insensitive detection
+
+### 🎛️ Column-Specific Control
+
+**NEW in v0.3.0!** Fine-grained control over optimization:
+
+```python
+# Skip specific columns (e.g., IDs, UUIDs)
+df = dp.diet(df, skip_columns=['user_id', 'uuid'])
+
+# Force categorical conversion on high-cardinality columns
+df = dp.diet(df, force_categorical=['country_code', 'product_sku'])
+
+# Use aggressive mode only for specific columns
+df = dp.diet(df, force_aggressive=['approximation_field', 'estimated_value'])
+
+# Combine multiple controls
+df = dp.diet(
+    df,
+    skip_columns=['id'],
+    force_categorical=['category'],
+    force_aggressive=['approx_price']
+)
+```
+
 ```python
 import dietpandas as dp
 
@@ -185,6 +228,8 @@ Diet Pandas uses a **"Trojan Horse"** architecture:
 
 | Original Type | Optimization | Example |
 |--------------|--------------|---------|
+| `int64` with only 0/1 | `boolean` | **NEW!** Flags, indicators (87.5% reduction) |
+| `object` with 'yes'/'no' | `boolean` | **NEW!** Survey responses |
 | `int64` with values 0-255 | `uint8` | User ages, small counts |
 | `int64` with values -100 to 100 | `int8` | Temperature data |
 | `float64` | `float32` | Most ML features |
@@ -209,11 +254,31 @@ print(df.memory_usage(deep=True).sum() / 1e9)  # 0.8 GB
 
 ## 🎛️ Advanced Usage
 
+### Column-Specific Control **NEW!**
+
+```python
+# Skip optimization for specific columns
+df = dp.diet(df, skip_columns=['user_id', 'uuid'])
+
+# Force categorical conversion for high-cardinality columns
+df = dp.diet(df, force_categorical=['country_code'])
+
+# Apply aggressive optimization only to specific columns
+df = dp.diet(df, force_aggressive=['estimated_value'])
+```
+
 ### Custom Categorical Threshold
 
 ```python
 # Convert to category if <30% unique values (default is 50%)
 df = dp.diet(df, categorical_threshold=0.3)
+```
+
+### Disable Boolean Optimization
+
+```python
+# Keep binary columns as integers instead of converting to boolean
+df = dp.diet(df, optimize_bools=False)
 ```
 
 ### In-Place Optimization

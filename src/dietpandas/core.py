@@ -99,6 +99,82 @@ def optimize_obj(series: pd.Series, categorical_threshold: float = 0.5) -> pd.Se
     return series
 
 
+def optimize_bool(series: pd.Series) -> pd.Series:
+    """
+    Converts integer or object columns to boolean dtype when appropriate.
+
+    Detects columns that contain only boolean-like values and converts them
+    to the bool dtype for maximum memory efficiency (1 byte vs 8 bytes).
+
+    Args:
+        series: A pandas Series with integer or object dtype
+
+    Returns:
+        Optimized Series with bool dtype if appropriate, otherwise unchanged
+
+    Examples:
+        >>> s = pd.Series([0, 1, 1, 0, 1], dtype='int64')
+        >>> optimized = optimize_bool(s)
+        >>> optimized.dtype
+        dtype('bool')
+
+        >>> s = pd.Series(['True', 'False', 'True'])
+        >>> optimized = optimize_bool(s)
+        >>> optimized.dtype
+        dtype('bool')
+
+        >>> s = pd.Series(['yes', 'no', 'yes'])
+        >>> optimized = optimize_bool(s)
+        >>> optimized.dtype
+        dtype('bool')
+    """
+    # Skip if already bool
+    if series.dtype == bool:
+        return series
+
+    # Get unique values (excluding NaN)
+    unique_vals = series.dropna().unique()
+
+    # If empty or all NaN, return as is
+    if len(unique_vals) == 0:
+        return series
+
+    # Check for numeric boolean (0, 1)
+    if np.issubdtype(series.dtype, np.integer):
+        if set(unique_vals).issubset({0, 1}):
+            # Convert to bool, preserving NaN
+            return series.astype('boolean')  # Use nullable boolean type
+
+    # Check for string boolean representations
+    if series.dtype == "object":
+        # Convert to lowercase for case-insensitive comparison
+        unique_vals_lower = set(str(v).lower() for v in unique_vals)
+
+        # Check various boolean representations
+        bool_patterns = [
+            {'true', 'false'},
+            {'yes', 'no'},
+            {'y', 'n'},
+            {'1', '0'},
+            {'t', 'f'},
+        ]
+
+        for pattern in bool_patterns:
+            if unique_vals_lower.issubset(pattern):
+                # Map to boolean
+                true_vals = {list(pattern)[0]}  # First value is True
+                try:
+                    bool_series = series.apply(
+                        lambda x: True if str(x).lower() in true_vals 
+                        else (False if pd.notna(x) else None)
+                    )
+                    return bool_series.astype('boolean')
+                except Exception:
+                    return series
+
+    return series
+
+
 def optimize_datetime(series: pd.Series) -> pd.Series:
     """
     Optimizes datetime columns by converting to more efficient datetime64 types.
@@ -193,12 +269,17 @@ def diet(
     sparse_threshold: float = 0.9,
     optimize_datetimes: bool = True,
     optimize_sparse_cols: bool = False,
+    optimize_bools: bool = True,
     inplace: bool = False,
+    skip_columns: list = None,
+    force_categorical: list = None,
+    force_aggressive: list = None,
 ) -> pd.DataFrame:
     """
     Main function to optimize DataFrame memory usage.
 
     This function iterates over all columns and applies appropriate optimizations:
+    - Booleans: Convert integer/object columns with boolean values to bool dtype
     - Integers: Downcast to smallest safe type (int8, int16, uint8, etc.)
     - Floats: Convert to float32 (or float16 in aggressive mode)
     - Objects: Convert to category if cardinality is low
@@ -213,7 +294,11 @@ def diet(
         sparse_threshold: Threshold for converting to sparse format (default: 0.9)
         optimize_datetimes: If True, optimize datetime columns (default: True)
         optimize_sparse_cols: If True, check for sparse optimization opportunities (default: False)
+        optimize_bools: If True, convert boolean-like columns to bool dtype (default: True)
         inplace: If True, modify the DataFrame in place (default: False)
+        skip_columns: List of column names to skip optimization (default: None)
+        force_categorical: List of column names to force categorical conversion (default: None)
+        force_aggressive: List of column names to force aggressive optimization (default: None)
 
     Returns:
         Optimized DataFrame with reduced memory usage
@@ -224,21 +309,53 @@ def diet(
         🥗 Diet Complete: Memory reduced by 62.5%
            0.00MB -> 0.00MB
 
-        >>> # Enable sparse optimization for data with many zeros
-        >>> df = pd.DataFrame({'binary': [0, 0, 1, 0, 0, 0, 0, 0]})
-        >>> optimized = diet(df, optimize_sparse_cols=True)
+        >>> # Skip specific columns
+        >>> df = diet(df, skip_columns=['id', 'uuid'])
+
+        >>> # Force categorical conversion on high-cardinality column
+        >>> df = diet(df, force_categorical=['country_code'])
+
+        >>> # Use aggressive mode only for specific columns
+        >>> df = diet(df, force_aggressive=['approximation_field'])
     """
     if not inplace:
         df = df.copy()
 
+    # Initialize lists if None
+    skip_columns = skip_columns or []
+    force_categorical = force_categorical or []
+    force_aggressive = force_aggressive or []
+
     start_mem = df.memory_usage(deep=True).sum()
 
     for col in df.columns:
+        # Skip if column is in skip list
+        if col in skip_columns:
+            continue
+
         dtype = df[col].dtype
 
         # Skip columns with all NaN values
         if df[col].isna().all():
             continue
+
+        # Check if column should use aggressive mode
+        use_aggressive = aggressive or (col in force_aggressive)
+
+        # Force categorical conversion if requested
+        if col in force_categorical:
+            try:
+                df[col] = df[col].astype("category")
+                continue
+            except Exception:
+                pass  # If conversion fails, proceed with normal optimization
+
+        # Optimize Booleans (check before integers)
+        if optimize_bools and (np.issubdtype(dtype, np.integer) or dtype == "object"):
+            optimized = optimize_bool(df[col])
+            if optimized.dtype == 'boolean' or optimized.dtype == bool:
+                df[col] = optimized
+                continue
 
         # Optimize Integers
         if np.issubdtype(dtype, np.integer):
@@ -249,7 +366,7 @@ def diet(
 
         # Optimize Floats
         elif np.issubdtype(dtype, np.floating):
-            df[col] = optimize_float(df[col], aggressive=aggressive)
+            df[col] = optimize_float(df[col], aggressive=use_aggressive)
             # Check for sparse after float optimization
             if optimize_sparse_cols:
                 df[col] = optimize_sparse(df[col], sparse_threshold=sparse_threshold)
