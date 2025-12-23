@@ -25,7 +25,8 @@ classifiers = [
 dependencies = [
     "pandas>=1.5.0",
     "numpy>=1.20.0",
-    "polars>=0.17.0"
+    "polars>=0.17.0",
+    "psutil>=5.9.0"
 ]
 requires-python = ">=3.10"
 
