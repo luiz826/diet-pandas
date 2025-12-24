@@ -355,6 +355,8 @@ df = dp.read_csv("PARTICIPANTES_2024.csv", sep=";")
 
 [**See Full Benchmarks →**](benchmarks/results/synthetic_results.md)
 
+You can see other benchmarks in the benchmarks folder.
+
 ## ✅ When to Use Diet-Pandas
 
 ### Perfect For:
