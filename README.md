@@ -6,6 +6,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Documentation](https://img.shields.io/badge/docs-mkdocs-blue.svg)](https://luiz826.github.io/diet-pandas/)
+[![Tested on 4.3M+ rows](https://img.shields.io/badge/tested-4.3M%2B%20rows-brightgreen.svg)](benchmarks/results/enem_results.md)
 
 ## 🎯 The Problem
 
@@ -301,20 +302,119 @@ Diet Pandas uses a **"Trojan Horse"** architecture:
 
 ## 📈 Real-World Performance
 
+### Tested on 4.3+ Million Rows
+
+Diet-pandas has been benchmarked on the **ENEM 2024 dataset** (Brazilian National Exam) with 4.3 million student records across multiple files:
+
+#### ENEM Results Dataset (1.6 GB CSV, 42 columns)
 ```python
 import pandas as pd
 import dietpandas as dp
 
 # Standard Pandas
-df = pd.read_csv("sales_data.csv")  # 2.3 GB, 45 seconds
-print(df.memory_usage(deep=True).sum() / 1e9)  # 2.3 GB
+df = pd.read_csv("RESULTADOS_2024.csv", sep=";")  
+# Memory: 4,349 MB | Load time: 17.24 sec
 
 # Diet Pandas
-df = dp.read_csv("sales_data.csv")  # 0.8 GB, 8 seconds
-print(df.memory_usage(deep=True).sum() / 1e9)  # 0.8 GB
-# Diet Complete: Memory reduced by 65.2%
-#    2300.00MB -> 800.00MB
+df = dp.read_csv("RESULTADOS_2024.csv", sep=";")  
+# Memory: 1,623 MB | Load time: 35.57 sec
+# ✅ 62.7% reduction | 2.7 GB saved!
 ```
+
+#### ENEM Participants Dataset (441 MB CSV, 38 columns)
+```python
+# Standard Pandas
+df = pd.read_csv("PARTICIPANTES_2024.csv", sep=";")  
+# Memory: 5,663 MB | Load time: 6.31 sec
+
+# Diet Pandas
+df = dp.read_csv("PARTICIPANTES_2024.csv", sep=";")  
+# Memory: 215 MB | Load time: 17.18 sec
+# ✅ 96.2% reduction | 5.4 GB saved!
+```
+
+**Key Findings:**
+- ✅ **62-96% memory reduction** on real government data
+- ✅ **2.7-5.4 GB saved per file** - critical for laptop workflows
+- ✅ Handles **4.3 million rows** with mixed data types
+- ✅ Extremely effective on categorical/geographic data (Brazilian states, cities)
+- ⚠️ Load time 2-3x slower (worth it for massive memory savings + iterative analysis)
+
+[**See Full Benchmarks →**](benchmarks/results/enem_results.md)
+
+### Synthetic Data Benchmarks
+
+| Dataset Size | Memory Reduction | Optimization Time |
+|--------------|------------------|-------------------|
+| 10K rows     | 82.3%           | 0.009 sec        |
+| 50K rows     | 85.8%           | 0.033 sec        |
+| 100K rows    | 86.3%           | 0.061 sec        |
+| 500K rows    | 86.6%           | 0.304 sec        |
+
+**Consistent 85%+ reduction** across all dataset sizes with minimal overhead.
+
+[**See Full Benchmarks →**](benchmarks/results/synthetic_results.md)
+
+You can see other benchmarks in the benchmarks folder.
+
+## ✅ When to Use Diet-Pandas
+
+### Perfect For:
+
+- 📊 **Large datasets (>100 MB)** on memory-constrained systems
+- 💻 **Laptop workflows** - Process 3-5x more data without upgrading RAM
+- 🔄 **Iterative analysis** - Load once, query many times (worth the initial load time)
+- 🗺️ **Categorical/geographic data** - State codes, city names, categories (95%+ reduction)
+- 🎓 **Educational/research** - Work with real datasets on student hardware
+- 🤖 **ML pipelines** - Reduce memory for feature engineering and model training
+- 📈 **Data exploration** - Fit larger datasets in Jupyter notebooks
+
+### Consider Alternatives If:
+
+- ⚠️ **Tiny datasets (<10 MB)** - Optimization overhead not worth it
+- ⚠️ **One-time read-and-aggregate** - Won't query data multiple times
+- ⚠️ **Time-critical ETL** - Where 2-3x load time matters more than memory
+- ⚠️ **Unlimited RAM available** - Cloud instances with 128+ GB RAM
+
+### Parquet Files: Special Case
+
+**Parquet helps with disk space, diet-pandas helps with RAM usage:**
+
+```python
+# Scenario 1: Parquet from unoptimized data (COMMON)
+df = pd.read_parquet('data.parquet')  # int64, object types
+# In memory: 1800 MB
+df_optimized = dp.diet(df)
+# In memory: 500 MB ✓ 72% reduction still possible!
+
+# Scenario 2: Parquet from already-optimized data (BEST)
+df = dp.read_csv('data.csv')  # Already optimized
+df.to_parquet('optimized.parquet')  # Saves efficient types
+# Future reads already optimal ✓
+```
+
+**When to use with Parquet:**
+- ✅ Parquet created from raw/unoptimized data (most cases)
+- ✅ Need to reduce in-memory usage during analysis
+- ✅ Not sure if original DataFrame was optimized
+- ❌ You optimized before saving to Parquet (already efficient)
+
+**Pro tip:** Optimize THEN save to Parquet for best results!
+
+### Trade-offs to Understand:
+
+**Slower initial load (2-3x) ↔️ Massive memory savings (60-96%)**
+
+Worth it when:
+- You'll run multiple queries on the data
+- Memory is limited (8-16 GB laptops)
+- Processing multiple large files simultaneously
+- Need to keep data in memory for hours
+
+Not worth it when:
+- Quick one-off aggregation then done
+- Have plenty of RAM available
+- Load time is critical (real-time systems)
 
 ## 🎛️ Advanced Usage
 
