@@ -6,6 +6,8 @@ by intelligently downcasting numeric types and converting strings to categories.
 """
 
 import warnings
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import partial
 
 import numpy as np
 import pandas as pd
@@ -33,6 +35,10 @@ def optimize_int(series: pd.Series) -> pd.Series:
         >>> optimized.dtype
         dtype('uint8')
     """
+    # Early exit: already optimal
+    if series.dtype in [np.uint8, np.int8]:
+        return series
+    
     c_min, c_max = series.min(), series.max()
 
     # Check if unsigned is possible (positive numbers only)
@@ -125,11 +131,9 @@ def optimize_float(
 
     # If not convertible to int, optimize as float
     if aggressive:
-        # Keto mode: Maximum compression
-        return series.astype(np.float16)
+        return series if series.dtype == np.float16 else series.astype(np.float16)
     else:
-        # Safe mode: float32 is usually sufficient for ML
-        return series.astype(np.float32)
+        return series if series.dtype == np.float32 else series.astype(np.float32)
 
 
 def optimize_obj(series: pd.Series, categorical_threshold: float = 0.5) -> pd.Series:
@@ -226,15 +230,21 @@ def optimize_bool(series: pd.Series) -> pd.Series:
 
         for true_vals, false_vals in bool_patterns:
             if unique_vals_lower.issubset(true_vals | false_vals):
-                # Map to boolean
+                # Map to boolean (vectorized approach)
                 try:
-                    bool_series = series.apply(
-                        lambda x: (
-                            True
-                            if str(x).lower() in true_vals
-                            else (False if pd.notna(x) else None)
-                        )
-                    )
+                    # Create mapping dictionary
+                    mapping = {}
+                    for val in true_vals:
+                        mapping[val] = True
+                        mapping[val.upper()] = True
+                        mapping[val.capitalize()] = True
+                    for val in false_vals:
+                        mapping[val] = False
+                        mapping[val.upper()] = False
+                        mapping[val.capitalize()] = False
+                    
+                    # Use vectorized str operations
+                    bool_series = series.str.lower().map(mapping)
                     return bool_series.astype("boolean")
                 except Exception:
                     return series
@@ -328,6 +338,100 @@ def optimize_sparse(series: pd.Series, sparse_threshold: float = 0.9) -> pd.Seri
     return series
 
 
+def _optimize_single_column(
+    col: str,
+    series: pd.Series,
+    aggressive: bool,
+    categorical_threshold: float,
+    sparse_threshold: float,
+    optimize_datetimes: bool,
+    optimize_sparse_cols: bool,
+    optimize_bools: bool,
+    float_to_int: bool,
+    skip_columns: list,
+    force_categorical: list,
+    force_aggressive: list,
+    warn_on_issues: bool,
+) -> tuple:
+    """Helper function to optimize a single column (for parallel processing)."""
+    # Skip if column is in skip list
+    if col in skip_columns:
+        return col, series, None
+
+    dtype = series.dtype
+
+    # Skip columns with all NaN values
+    if series.isna().all():
+        warning = None
+        if warn_on_issues:
+            warning = (
+                f"Column '{col}' contains only NaN values. Skipping optimization.",
+                OptimizationSkippedWarning,
+            )
+        return col, series, warning
+
+    # Check if column should use aggressive mode
+    use_aggressive = aggressive or (col in force_aggressive)
+
+    # Warn about aggressive mode precision loss
+    warning = None
+    if use_aggressive and np.issubdtype(dtype, np.floating) and warn_on_issues:
+        warning = (
+            f"Column '{col}': Aggressive mode (float16) may cause precision loss. "
+            f"Consider using force_aggressive=['{col}'] only if acceptable.",
+            PrecisionLossWarning,
+        )
+
+    # Force categorical conversion if requested
+    if col in force_categorical:
+        try:
+            return col, series.astype("category"), warning
+        except Exception:
+            pass  # If conversion fails, proceed with normal optimization
+
+    # Optimize Booleans (check before integers)
+    if optimize_bools and (np.issubdtype(dtype, np.integer) or dtype == "object"):
+        optimized = optimize_bool(series)
+        if optimized.dtype == "boolean" or optimized.dtype == bool:
+            return col, optimized, warning
+
+    # Optimize Integers
+    if np.issubdtype(dtype, np.integer):
+        optimized = optimize_int(series)
+        # Check for sparse after int optimization
+        if optimize_sparse_cols:
+            optimized = optimize_sparse(optimized, sparse_threshold=sparse_threshold)
+        return col, optimized, warning
+
+    # Optimize Floats
+    elif np.issubdtype(dtype, np.floating):
+        optimized = optimize_float(series, aggressive=use_aggressive, float_to_int=float_to_int)
+        # Check for sparse after float optimization
+        if optimize_sparse_cols:
+            optimized = optimize_sparse(optimized, sparse_threshold=sparse_threshold)
+        return col, optimized, warning
+
+    # Optimize DateTime
+    elif pd.api.types.is_datetime64_any_dtype(dtype) and optimize_datetimes:
+        return col, optimize_datetime(series), warning
+
+    # Optimize Objects (Strings)
+    elif dtype == "object":
+        # Warn about high cardinality
+        if warn_on_issues:
+            unique_ratio = series.nunique() / len(series) if len(series) > 0 else 0
+            if unique_ratio >= categorical_threshold:
+                warning = (
+                    f"Column '{col}' has high cardinality ({unique_ratio:.1%} unique values). "
+                    f"Not suitable for category conversion. Consider adding to skip_columns.",
+                    HighCardinalityWarning,
+                )
+
+        return col, optimize_obj(series, categorical_threshold=categorical_threshold), warning
+
+    return col, series, warning
+
+
 def diet(
     df: pd.DataFrame,
     verbose: bool = True,
@@ -343,6 +447,8 @@ def diet(
     force_categorical: list = None,
     force_aggressive: list = None,
     warn_on_issues: bool = False,
+    parallel: bool = True,
+    max_workers: int = None,
 ) -> pd.DataFrame:
     """
     Main function to optimize DataFrame memory usage.
@@ -374,6 +480,9 @@ def diet(
         force_categorical: List of column names to force categorical conversion (default: None)
         force_aggressive: List of column names to force aggressive optimization (default: None)
         warn_on_issues: If True, emit warnings for potential issues (default: False)
+        parallel: If True, use parallel processing for column optimization (default: True)
+        max_workers: Maximum number of worker threads for parallel processing
+            (default: None, uses number of CPU cores)
 
     Returns:
         Optimized DataFrame with reduced memory usage
@@ -406,82 +515,63 @@ def diet(
 
     start_mem = df.memory_usage(deep=True).sum()
 
-    for col in df.columns:
-        # Skip if column is in skip list
-        if col in skip_columns:
-            continue
+    # Parallel processing for column optimization
+    if parallel and len(df.columns) > 1:
+        # Create partial function with fixed parameters
+        optimize_func = partial(
+            _optimize_single_column,
+            aggressive=aggressive,
+            categorical_threshold=categorical_threshold,
+            sparse_threshold=sparse_threshold,
+            optimize_datetimes=optimize_datetimes,
+            optimize_sparse_cols=optimize_sparse_cols,
+            optimize_bools=optimize_bools,
+            float_to_int=float_to_int,
+            skip_columns=skip_columns,
+            force_categorical=force_categorical,
+            force_aggressive=force_aggressive,
+            warn_on_issues=warn_on_issues,
+        )
 
-        dtype = df[col].dtype
+        # Process columns in parallel
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all column optimization tasks
+            future_to_col = {
+                executor.submit(optimize_func, col, df[col].copy()): col 
+                for col in df.columns
+            }
 
-        # Skip columns with all NaN values
-        if df[col].isna().all():
-            if warn_on_issues:
-                warnings.warn(
-                    f"Column '{col}' contains only NaN values. Skipping optimization.",
-                    OptimizationSkippedWarning,
-                    stacklevel=2,
-                )
-            continue
-
-        # Check if column should use aggressive mode
-        use_aggressive = aggressive or (col in force_aggressive)
-
-        # Warn about aggressive mode precision loss
-        if use_aggressive and np.issubdtype(dtype, np.floating) and warn_on_issues:
-            warnings.warn(
-                f"Column '{col}': Aggressive mode (float16) may cause precision loss. "
-                f"Consider using force_aggressive=['{col}'] only if acceptable.",
-                PrecisionLossWarning,
-                stacklevel=2,
+            # Collect results as they complete
+            for future in as_completed(future_to_col):
+                col, optimized_series, warning = future.result()
+                df[col] = optimized_series
+                
+                # Emit warnings if any
+                if warning:
+                    warnings.warn(warning[0], warning[1], stacklevel=2)
+    else:
+        # Sequential processing (fallback or for single column)
+        for col in df.columns:
+            col, optimized_series, warning = _optimize_single_column(
+                col,
+                df[col],
+                aggressive=aggressive,
+                categorical_threshold=categorical_threshold,
+                sparse_threshold=sparse_threshold,
+                optimize_datetimes=optimize_datetimes,
+                optimize_sparse_cols=optimize_sparse_cols,
+                optimize_bools=optimize_bools,
+                float_to_int=float_to_int,
+                skip_columns=skip_columns,
+                force_categorical=force_categorical,
+                force_aggressive=force_aggressive,
+                warn_on_issues=warn_on_issues,
             )
-
-        # Force categorical conversion if requested
-        if col in force_categorical:
-            try:
-                df[col] = df[col].astype("category")
-                continue
-            except Exception:
-                pass  # If conversion fails, proceed with normal optimization
-
-        # Optimize Booleans (check before integers)
-        if optimize_bools and (np.issubdtype(dtype, np.integer) or dtype == "object"):
-            optimized = optimize_bool(df[col])
-            if optimized.dtype == "boolean" or optimized.dtype == bool:
-                df[col] = optimized
-                continue
-
-        # Optimize Integers
-        if np.issubdtype(dtype, np.integer):
-            df[col] = optimize_int(df[col])
-            # Check for sparse after int optimization
-            if optimize_sparse_cols:
-                df[col] = optimize_sparse(df[col], sparse_threshold=sparse_threshold)
-
-        # Optimize Floats
-        elif np.issubdtype(dtype, np.floating):
-            df[col] = optimize_float(df[col], aggressive=use_aggressive, float_to_int=float_to_int)
-            # Check for sparse after float optimization
-            if optimize_sparse_cols:
-                df[col] = optimize_sparse(df[col], sparse_threshold=sparse_threshold)
-
-        # Optimize DateTime
-        elif pd.api.types.is_datetime64_any_dtype(dtype) and optimize_datetimes:
-            df[col] = optimize_datetime(df[col])
-
-        # Optimize Objects (Strings)
-        elif dtype == "object":
-            # Warn about high cardinality
-            if warn_on_issues:
-                unique_ratio = df[col].nunique() / len(df[col]) if len(df[col]) > 0 else 0
-                if unique_ratio >= categorical_threshold:
-                    warnings.warn(
-                        f"Column '{col}' has high cardinality ({unique_ratio:.1%} unique values). "
-                        f"Not suitable for category conversion. Consider adding to skip_columns.",
-                        HighCardinalityWarning,
-                        stacklevel=2,
-                    )
-
-            df[col] = optimize_obj(df[col], categorical_threshold=categorical_threshold)
+            df[col] = optimized_series
+            
+            # Emit warnings if any
+            if warning:
+                warnings.warn(warning[0], warning[1], stacklevel=2)
 
     end_mem = df.memory_usage(deep=True).sum()
 
