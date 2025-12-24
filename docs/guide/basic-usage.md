@@ -92,6 +92,59 @@ df = dp.diet(df, aggressive=True)
 # Avoid for: financial calculations, scientific computing
 ```
 
+## Smart Float-to-Integer Conversion
+
+By default, `diet()` automatically detects when float columns contain only whole numbers (like 1.0, 2.0, 3.0) and converts them to integer types for better memory efficiency.
+
+### When It Helps
+
+This is particularly useful for:
+- **IDs and counts** loaded as floats
+- **Year columns** (2020.0, 2021.0, etc.)
+- **Categorical codes** stored as floats
+- **Survey responses** (1.0, 2.0, 3.0, 4.0, 5.0)
+
+```python
+import pandas as pd
+import dietpandas as dp
+
+# Common scenario: CSV with mixed types
+df = pd.DataFrame({
+    'user_id': [1.0, 2.0, 3.0, 4.0],      # float64
+    'year': [2020.0, 2021.0, 2022.0, 2023.0],  # float64
+    'rating': [4.5, 3.8, 4.2, 3.9],       # float64 (has decimals)
+})
+
+df_optimized = dp.diet(df)  # float_to_int=True by default
+print(df_optimized.dtypes)
+# user_id     uint8    ✓ Converted to integer
+# year       uint16    ✓ Converted to integer  
+# rating    float32    ✓ Stays float (has decimals)
+```
+
+### Handling NaN Values
+
+The conversion preserves NaN values using nullable integer types:
+
+```python
+df = pd.DataFrame({
+    'ratings': [5.0, 4.0, np.nan, 3.0, 5.0]  # float64 with NaN
+})
+
+df_optimized = dp.diet(df)
+print(df_optimized.dtypes)
+# ratings    UInt8    ✓ Nullable integer preserves NaN
+```
+
+### Disabling Float-to-Int Conversion
+
+If you want floats to remain as floats:
+
+```python
+df = dp.diet(df, float_to_int=False)
+# All floats stay as float32/float16 (depending on aggressive mode)
+```
+
 ## Customizing Optimization
 
 ### Categorical Threshold

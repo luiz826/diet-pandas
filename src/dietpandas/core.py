@@ -56,17 +56,74 @@ def optimize_int(series: pd.Series) -> pd.Series:
     return series
 
 
-def optimize_float(series: pd.Series, aggressive: bool = False) -> pd.Series:
+def optimize_float(
+    series: pd.Series, aggressive: bool = False, float_to_int: bool = True
+) -> pd.Series:
     """
-    Downcasts float series to float32 or float16 (if aggressive mode).
+    Downcasts float series to float32, float16, or integer types when possible.
+
+    First checks if the float values are actually integers (no decimal part).
+    If so, converts to the appropriate integer type. Otherwise, downcasts to
+    float32 or float16 (if aggressive mode).
 
     Args:
         series: A pandas Series with float dtype
         aggressive: If True, use float16 for maximum compression (may lose precision)
+        float_to_int: If True, convert floats to integers when they have no decimal part
 
     Returns:
-        Optimized Series with smaller float type
+        Optimized Series with smaller float type or integer type
+
+    Examples:
+        >>> s = pd.Series([1.0, 2.0, 3.0, 4.0])
+        >>> optimized = optimize_float(s, float_to_int=True)
+        >>> optimized.dtype
+        dtype('int8')
+
+        >>> s = pd.Series([1.5, 2.5, 3.5])
+        >>> optimized = optimize_float(s, float_to_int=True)
+        >>> optimized.dtype
+        dtype('float32')
     """
+    # Check if all values are integers (no decimal part)
+    if float_to_int:
+        # Check if series contains only integer values (excluding NaN)
+        is_integer = series.dropna().apply(lambda x: x == int(x)).all()
+
+        if is_integer:
+            has_na = series.isna().any()
+
+            if has_na:
+                # Use nullable integer type to preserve NaN
+                # First convert to Int64, then optimize to smaller nullable int
+                int_series = series.astype("Int64")
+
+                # Manually optimize nullable integers
+                c_min, c_max = int_series.min(), int_series.max()
+
+                if c_min >= 0:
+                    if c_max <= np.iinfo(np.uint8).max:
+                        return int_series.astype("UInt8")
+                    if c_max <= np.iinfo(np.uint16).max:
+                        return int_series.astype("UInt16")
+                    if c_max <= np.iinfo(np.uint32).max:
+                        return int_series.astype("UInt32")
+                    return int_series.astype("UInt64")
+                else:
+                    if c_min >= np.iinfo(np.int8).min and c_max <= np.iinfo(np.int8).max:
+                        return int_series.astype("Int8")
+                    if c_min >= np.iinfo(np.int16).min and c_max <= np.iinfo(np.int16).max:
+                        return int_series.astype("Int16")
+                    if c_min >= np.iinfo(np.int32).min and c_max <= np.iinfo(np.int32).max:
+                        return int_series.astype("Int32")
+                    return int_series.astype("Int64")
+            else:
+                # No NaN, use regular integer type
+                int_series = series.astype(np.int64)
+                # Now optimize the integer series
+                return optimize_int(int_series)
+
+    # If not convertible to int, optimize as float
     if aggressive:
         # Keto mode: Maximum compression
         return series.astype(np.float16)
@@ -280,6 +337,7 @@ def diet(
     optimize_datetimes: bool = True,
     optimize_sparse_cols: bool = False,
     optimize_bools: bool = True,
+    float_to_int: bool = True,
     inplace: bool = False,
     skip_columns: list = None,
     force_categorical: list = None,
@@ -292,7 +350,8 @@ def diet(
     This function iterates over all columns and applies appropriate optimizations:
     - Booleans: Convert integer/object columns with boolean values to bool dtype
     - Integers: Downcast to smallest safe type (int8, int16, uint8, etc.)
-    - Floats: Convert to float32 (or float16 in aggressive mode)
+    - Floats: Convert to integers if they contain only whole numbers, else
+      float32 (or float16 in aggressive mode)
     - Objects: Convert to category if cardinality is low
     - DateTime: Optimize datetime representations
     - Sparse: Convert to sparse arrays for columns with many repeated values
@@ -304,8 +363,12 @@ def diet(
         categorical_threshold: Threshold for converting objects to categories
         sparse_threshold: Threshold for converting to sparse format (default: 0.9)
         optimize_datetimes: If True, optimize datetime columns (default: True)
-        optimize_sparse_cols: If True, check for sparse optimization opportunities (default: False)
-        optimize_bools: If True, convert boolean-like columns to bool dtype (default: True)
+        optimize_sparse_cols: If True, check for sparse optimization
+            opportunities (default: False)
+        optimize_bools: If True, convert boolean-like columns to bool dtype
+            (default: True)
+        float_to_int: If True, convert float columns to integers when they
+            contain only whole numbers (default: True)
         inplace: If True, modify the DataFrame in place (default: False)
         skip_columns: List of column names to skip optimization (default: None)
         force_categorical: List of column names to force categorical conversion (default: None)
@@ -396,7 +459,7 @@ def diet(
 
         # Optimize Floats
         elif np.issubdtype(dtype, np.floating):
-            df[col] = optimize_float(df[col], aggressive=use_aggressive)
+            df[col] = optimize_float(df[col], aggressive=use_aggressive, float_to_int=float_to_int)
             # Check for sparse after float optimization
             if optimize_sparse_cols:
                 df[col] = optimize_sparse(df[col], sparse_threshold=sparse_threshold)

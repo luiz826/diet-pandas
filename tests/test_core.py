@@ -532,5 +532,96 @@ class TestDietWithBooleanOptimization:
         assert optimized_memory < original_memory * 0.5  # At least 50% reduction
 
 
+class TestFloatToInt:
+    """Tests for float-to-integer conversion optimization."""
+
+    def test_optimize_float_whole_numbers_to_int(self):
+        """Test that floats with no decimal part are converted to integers."""
+        s = pd.Series([1.0, 2.0, 3.0, 4.0], dtype="float64")
+        result = optimize_float(s, float_to_int=True)
+        # Should be converted to smallest int type
+        assert np.issubdtype(result.dtype, np.integer)
+        assert list(result) == [1, 2, 3, 4]
+
+    def test_optimize_float_mixed_decimals_stays_float(self):
+        """Test that floats with decimal parts stay as float."""
+        s = pd.Series([1.5, 2.5, 3.5], dtype="float64")
+        result = optimize_float(s, float_to_int=True)
+        # Should remain float32
+        assert result.dtype == np.float32
+        assert np.allclose(result, [1.5, 2.5, 3.5])
+
+    def test_optimize_float_with_nan_to_int(self):
+        """Test that floats with NaN can be converted to nullable int."""
+        s = pd.Series([1.0, 2.0, np.nan, 4.0], dtype="float64")
+        result = optimize_float(s, float_to_int=True)
+        # Should be converted to nullable Int type
+        assert pd.api.types.is_integer_dtype(result.dtype) or str(result.dtype).startswith("Int")
+        assert result.iloc[0] == 1
+        assert result.iloc[1] == 2
+        assert pd.isna(result.iloc[2])
+        assert result.iloc[3] == 4
+
+    def test_optimize_float_large_whole_numbers(self):
+        """Test that large whole numbers are converted to appropriate int type."""
+        s = pd.Series([1000.0, 2000.0, 3000.0], dtype="float64")
+        result = optimize_float(s, float_to_int=True)
+        assert np.issubdtype(result.dtype, np.integer)
+        assert list(result) == [1000, 2000, 3000]
+
+    def test_optimize_float_negative_whole_numbers(self):
+        """Test that negative whole numbers are converted to signed int."""
+        s = pd.Series([-100.0, -50.0, 0.0, 50.0, 100.0], dtype="float64")
+        result = optimize_float(s, float_to_int=True)
+        assert np.issubdtype(result.dtype, np.integer)
+        assert list(result) == [-100, -50, 0, 50, 100]
+
+    def test_optimize_float_disable_conversion(self):
+        """Test that float_to_int can be disabled."""
+        s = pd.Series([1.0, 2.0, 3.0], dtype="float64")
+        result = optimize_float(s, float_to_int=False)
+        # Should remain float32
+        assert result.dtype == np.float32
+
+    def test_diet_float_to_int_integration(self):
+        """Test float-to-int conversion in full diet function."""
+        df = pd.DataFrame(
+            {
+                "whole_floats": [1.0, 2.0, 3.0, 4.0],
+                "decimal_floats": [1.5, 2.5, 3.5, 4.5],
+                "mixed": [1.0, 2.0, 3.0, 4.0],
+            }
+        )
+
+        result = diet(df, verbose=False, float_to_int=True)
+
+        # whole_floats should be converted to int
+        assert np.issubdtype(result["whole_floats"].dtype, np.integer)
+        # decimal_floats should remain float
+        assert np.issubdtype(result["decimal_floats"].dtype, np.floating)
+        # mixed should be converted to int
+        assert np.issubdtype(result["mixed"].dtype, np.integer)
+
+    def test_diet_disable_float_to_int(self):
+        """Test that float_to_int conversion can be disabled in diet."""
+        df = pd.DataFrame({"whole_floats": [1.0, 2.0, 3.0, 4.0]})
+
+        result = diet(df, verbose=False, float_to_int=False)
+
+        # Should remain float (float32)
+        assert result["whole_floats"].dtype == np.float32
+
+    def test_float_to_int_memory_savings(self):
+        """Test that float-to-int conversion reduces memory."""
+        df = pd.DataFrame({"float_col": [float(i) for i in range(1000)]})
+
+        original_memory = df.memory_usage(deep=True).sum()
+        result = diet(df, verbose=False, float_to_int=True)
+        optimized_memory = result.memory_usage(deep=True).sum()
+
+        # Should reduce memory (float64 -> smaller int type)
+        assert optimized_memory < original_memory
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

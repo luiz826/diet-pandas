@@ -8,7 +8,7 @@ without losing information, by intelligently downcasting numeric types and
 converting repetitive strings to categories.
 """
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 
 from .analysis import (
     analyze,
