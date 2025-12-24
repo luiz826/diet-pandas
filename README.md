@@ -59,7 +59,7 @@ print(df_light.info())
 
 ## ✨ Features
 
-### ⚡ Parallel Processing (NEW in v0.5.0!)
+### ⚡ Parallel Processing
 
 Diet Pandas now uses multi-threaded processing for 2-4x faster optimization:
 
@@ -335,24 +335,12 @@ import dietpandas as dp
 
 # Standard Pandas
 df = pd.read_csv("RESULTADOS_2024.csv", sep=";")  
-# Memory: 4,349 MB | Load time: 17.24 sec
+# Memory: 4,349 MB | Load time: 17.31 sec
 
 # Diet Pandas
 df = dp.read_csv("RESULTADOS_2024.csv", sep=";")  
-# Memory: 1,623 MB | Load time: 35.57 sec
+# Memory: 1,623 MB | Load time: 32.99 sec
 # ✅ 62.7% reduction | 2.7 GB saved!
-```
-
-#### ENEM Participants Dataset (441 MB CSV, 38 columns)
-```python
-# Standard Pandas
-df = pd.read_csv("PARTICIPANTES_2024.csv", sep=";")  
-# Memory: 5,663 MB | Load time: 6.31 sec
-
-# Diet Pandas
-df = dp.read_csv("PARTICIPANTES_2024.csv", sep=";")  
-# Memory: 215 MB | Load time: 17.18 sec
-# ✅ 96.2% reduction | 5.4 GB saved!
 ```
 
 **Key Findings:**

@@ -8,8 +8,8 @@
     "diet_memory_mb": 1623.2315044403076,
     "memory_reduction_pct": 62.678215945283455,
     "memory_saved_mb": 2726.055501937866,
-    "pandas_load_time_sec": 17.244506120681763,
-    "diet_load_time_sec": 35.57150912284851
+    "pandas_load_time_sec": 17.30801010131836,
+    "diet_load_time_sec": 32.987420082092285
   },
   {
     "file_name": "PARTICIPANTES_2024.csv",
@@ -20,7 +20,7 @@
     "diet_memory_mb": 215.06682968139648,
     "memory_reduction_pct": 96.20220878342238,
     "memory_saved_mb": 5447.878219604492,
-    "pandas_load_time_sec": 6.307337999343872,
-    "diet_load_time_sec": 17.17937994003296
+    "pandas_load_time_sec": 6.340404033660889,
+    "diet_load_time_sec": 15.912785053253174
   }
 ]
