@@ -5,6 +5,30 @@ All notable changes to Diet Pandas will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-12-23
+
+### Added
+- **Smart Float-to-Integer Conversion**: Automatically detect and convert float columns to integers when they contain only whole numbers
+  - Detects floats with no decimal part (e.g., 1.0, 2.0, 3.0)
+  - Converts to smallest appropriate integer type (int8, int16, uint8, etc.)
+  - Preserves NaN values using nullable integer types (Int8, UInt8, etc.)
+  - New `float_to_int` parameter for `diet()` and `optimize_float()` (default: True)
+  - Can be disabled with `float_to_int=False` to preserve float types
+  - Significant memory savings for ID columns, year fields, counts, and categorical codes
+  - 9 comprehensive test cases covering edge cases and NaN handling
+
+### Improved
+- Enhanced `optimize_float()` with intelligent integer detection logic
+- Updated documentation with float-to-int examples and use cases
+- Added `float_to_int_demo.py` script demonstrating the feature
+
+### Performance
+- Up to 50% memory reduction for datasets with float-typed integer columns
+- Common in CSV files where numeric columns are loaded as float64 by default
+
+### Tests
+- 128 total tests passing (9 new float-to-int conversion tests)
+
 ## [0.3.0] - 2025-12-23
 
 ### Added
