@@ -59,6 +59,28 @@ print(df_light.info())
 
 ## ✨ Features
 
+### ⚡ Parallel Processing (NEW in v0.5.0!)
+
+Diet Pandas now uses multi-threaded processing for 2-4x faster optimization:
+
+```python
+import dietpandas as dp
+
+# Parallel processing enabled by default (uses all CPU cores)
+df = dp.diet(df, parallel=True)
+
+# Control number of worker threads
+df = dp.diet(df, parallel=True, max_workers=4)
+
+# Disable for sequential processing
+df = dp.diet(df, parallel=False)
+```
+
+**Performance improvements:**
+- 2-4x faster on multi-core systems
+- Automatic fallback to sequential for small DataFrames
+- Thread-safe optimization of independent columns
+
 ### 🏃 Fast Loading with Polars Engine
 
 Diet Pandas uses [Polars](https://www.pola.rs/) (a blazing-fast DataFrame library) to parse CSV files, then automatically converts to optimized Pandas DataFrames.
