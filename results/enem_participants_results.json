@@ -1,0 +1,12 @@
+{
+  "dataset": "ENEM 2024 - PARTICIPANTES",
+  "rows": 4332944,
+  "columns": 1,
+  "file_size_mb": 440.6191530227661,
+  "pandas_memory_mb": 665.4828643798828,
+  "diet_memory_mb": 844.5451860427856,
+  "memory_reduction_pct": -26.907127327727448,
+  "pandas_load_time_sec": 3.504149913787842,
+  "diet_load_time_sec": 9.92212986946106,
+  "speed_factor": 0.3531650925647657
+}
