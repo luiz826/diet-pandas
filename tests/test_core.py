@@ -623,5 +623,261 @@ class TestFloatToInt:
         assert optimized_memory < original_memory
 
 
+class TestParallelProcessing:
+    """Tests for parallel column optimization."""
+
+    def test_parallel_processing_enabled(self):
+        """Test that parallel processing produces correct results."""
+        df = pd.DataFrame(
+            {
+                "int_col": [1, 2, 3, 4, 5] * 100,
+                "float_col": [1.1, 2.2, 3.3, 4.4, 5.5] * 100,
+                "str_col": ["A", "B", "C", "D", "E"] * 100,
+                "bool_col": [0, 1, 1, 0, 1] * 100,
+            }
+        )
+
+        result_parallel = diet(df, verbose=False, parallel=True)
+        result_sequential = diet(df, verbose=False, parallel=False)
+
+        # Results should be identical
+        assert result_parallel["int_col"].dtype == result_sequential["int_col"].dtype
+        assert result_parallel["float_col"].dtype == result_sequential["float_col"].dtype
+        assert result_parallel["str_col"].dtype == result_sequential["str_col"].dtype
+        assert result_parallel["bool_col"].dtype == result_sequential["bool_col"].dtype
+
+        # Values should be identical
+        pd.testing.assert_frame_equal(result_parallel, result_sequential)
+
+    def test_parallel_processing_disabled(self):
+        """Test that parallel processing can be disabled."""
+        df = pd.DataFrame(
+            {
+                "col1": [1, 2, 3],
+                "col2": [4.5, 5.5, 6.5],
+            }
+        )
+
+        result = diet(df, verbose=False, parallel=False)
+        assert result["col1"].dtype in [np.uint8, np.int8]
+        assert result["col2"].dtype == np.float32
+
+    def test_parallel_with_max_workers(self):
+        """Test that max_workers parameter is respected."""
+        df = pd.DataFrame({f"col{i}": [1, 2, 3, 4, 5] * 20 for i in range(10)})
+
+        result = diet(df, verbose=False, parallel=True, max_workers=2)
+
+        # Should still optimize correctly
+        for col in result.columns:
+            assert result[col].dtype in [np.uint8, np.int8, np.uint16, np.int16]
+
+    def test_parallel_with_single_column(self):
+        """Test that single column DataFrames work with parallel=True."""
+        df = pd.DataFrame({"col1": [1, 2, 3, 4, 5]})
+
+        result = diet(df, verbose=False, parallel=True)
+        assert result["col1"].dtype in [np.uint8, np.int8]
+
+    def test_parallel_preserves_skip_columns(self):
+        """Test that skip_columns works with parallel processing."""
+        df = pd.DataFrame(
+            {
+                "skip_me": [1, 2, 3],
+                "optimize_me": [4, 5, 6],
+            }
+        )
+
+        result = diet(df, verbose=False, parallel=True, skip_columns=["skip_me"])
+
+        # skip_me should remain int64
+        assert result["skip_me"].dtype == np.int64
+        # optimize_me should be optimized
+        assert result["optimize_me"].dtype in [np.uint8, np.int8]
+
+    def test_parallel_preserves_force_categorical(self):
+        """Test that force_categorical works with parallel processing."""
+        df = pd.DataFrame(
+            {
+                "col1": ["a", "b", "c", "d", "e"] * 50,  # High cardinality
+            }
+        )
+
+        result = diet(df, verbose=False, parallel=True, force_categorical=["col1"])
+        assert result["col1"].dtype.name == "category"
+
+
+class TestEarlyExitOptimizations:
+    """Tests for early-exit optimizations in optimization functions."""
+
+    def test_optimize_int_early_exit_uint8(self):
+        """Test that uint8 columns are returned immediately."""
+        s = pd.Series([1, 2, 3], dtype=np.uint8)
+        result = optimize_int(s)
+
+        # Should return the same series (no conversion)
+        assert result.dtype == np.uint8
+        assert result is s  # Should be the same object
+
+    def test_optimize_int_early_exit_int8(self):
+        """Test that int8 columns are returned immediately."""
+        s = pd.Series([-1, 0, 1], dtype=np.int8)
+        result = optimize_int(s)
+
+        # Should return the same series (no conversion)
+        assert result.dtype == np.int8
+        assert result is s  # Should be the same object
+
+    def test_optimize_float_early_exit_float32(self):
+        """Test that float32 columns are returned immediately in normal mode."""
+        s = pd.Series([1.1, 2.2, 3.3], dtype=np.float32)
+        result = optimize_float(s, aggressive=False)
+
+        # Should return the same series (no conversion)
+        assert result.dtype == np.float32
+        assert result is s  # Should be the same object
+
+    def test_optimize_float_early_exit_float16(self):
+        """Test that float16 columns are returned immediately in aggressive mode."""
+        s = pd.Series([1.1, 2.2, 3.3], dtype=np.float16)
+        result = optimize_float(s, aggressive=True)
+
+        # Should return the same series (no conversion)
+        assert result.dtype == np.float16
+        assert result is s  # Should be the same object
+
+    def test_optimize_float_no_early_exit_float32_aggressive(self):
+        """Test that float32 is still converted in aggressive mode."""
+        s = pd.Series([1.1, 2.2, 3.3], dtype=np.float32)
+        result = optimize_float(s, aggressive=True)
+
+        # Should convert to float16
+        assert result.dtype == np.float16
+
+    def test_early_exit_performance_benefit(self):
+        """Test that early exits improve performance for already-optimal DataFrames."""
+        # Create a DataFrame with already-optimal types
+        df = pd.DataFrame(
+            {
+                "uint8_col": pd.Series([1, 2, 3] * 1000, dtype=np.uint8),
+                "int8_col": pd.Series([-1, 0, 1] * 1000, dtype=np.int8),
+                "float32_col": pd.Series([1.1, 2.2, 3.3] * 1000, dtype=np.float32),
+            }
+        )
+
+        original_memory = df.memory_usage(deep=True).sum()
+        result = diet(df, verbose=False)
+        result_memory = result.memory_usage(deep=True).sum()
+
+        # Memory should remain the same (no unnecessary conversions)
+        assert result_memory == original_memory
+
+        # Types should remain the same
+        assert result["uint8_col"].dtype == np.uint8
+        assert result["int8_col"].dtype == np.int8
+        assert result["float32_col"].dtype == np.float32
+
+
+class TestVectorizedBoolOptimization:
+    """Tests for vectorized boolean optimization."""
+
+    def test_vectorized_bool_true_false(self):
+        """Test vectorized optimization for 'true'/'false' strings."""
+        s = pd.Series(["true", "false", "true", "false", "TRUE", "FALSE"])
+        result = optimize_bool(s)
+
+        assert result.dtype == "boolean"
+        assert result[0]
+        assert not result[1]
+        assert result[4]
+        assert not result[5]
+
+    def test_vectorized_bool_yes_no(self):
+        """Test vectorized optimization for 'yes'/'no' strings."""
+        s = pd.Series(["yes", "no", "YES", "No", "Yes", "NO"])
+        result = optimize_bool(s)
+
+        assert result.dtype == "boolean"
+        assert result[0]
+        assert not result[1]
+        assert result[2]
+        assert not result[3]
+
+    def test_vectorized_bool_y_n(self):
+        """Test vectorized optimization for 'y'/'n' strings."""
+        s = pd.Series(["y", "n", "Y", "N"])
+        result = optimize_bool(s)
+
+        assert result.dtype == "boolean"
+        assert result[0]
+        assert not result[1]
+
+    def test_vectorized_bool_t_f(self):
+        """Test vectorized optimization for 't'/'f' strings."""
+        s = pd.Series(["t", "f", "T", "F"])
+        result = optimize_bool(s)
+
+        assert result.dtype == "boolean"
+        assert result[0]
+        assert not result[1]
+
+    def test_vectorized_bool_string_one_zero(self):
+        """Test vectorized optimization for '1'/'0' strings."""
+        s = pd.Series(["1", "0", "1", "0"])
+        result = optimize_bool(s)
+
+        assert result.dtype == "boolean"
+        assert result[0]
+        assert not result[1]
+
+    def test_vectorized_bool_with_nan(self):
+        """Test that NaN values are preserved in vectorized optimization."""
+        s = pd.Series(["true", None, "false", "true", None])
+        result = optimize_bool(s)
+
+        assert result.dtype == "boolean"
+        assert result[0]
+        assert pd.isna(result[1])
+        assert not result[2]
+        assert result[3]
+        assert pd.isna(result[4])
+
+    def test_vectorized_bool_case_insensitive(self):
+        """Test that vectorized bool optimization is case-insensitive."""
+        s = pd.Series(["True", "FALSE", "tRuE", "FaLsE"])
+        result = optimize_bool(s)
+
+        assert result.dtype == "boolean"
+        assert result[0]
+        assert not result[1]
+        assert result[2]
+        assert not result[3]
+
+    def test_vectorized_bool_large_dataset(self):
+        """Test vectorized bool optimization on larger dataset."""
+        # Create a large dataset to test performance benefit
+        s = pd.Series(["yes", "no"] * 5000)
+        result = optimize_bool(s)
+
+        assert result.dtype == "boolean"
+        assert result.sum() == 5000  # Count of True values
+
+    def test_vectorized_bool_in_diet(self):
+        """Test that vectorized bool optimization works in full diet function."""
+        df = pd.DataFrame(
+            {
+                "bool1": ["true", "false", "true"] * 100,
+                "bool2": ["yes", "no", "yes"] * 100,
+                "bool3": ["1", "0", "1"] * 100,
+            }
+        )
+
+        result = diet(df, verbose=False, optimize_bools=True)
+
+        assert result["bool1"].dtype == "boolean"
+        assert result["bool2"].dtype == "boolean"
+        assert result["bool3"].dtype == "boolean"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

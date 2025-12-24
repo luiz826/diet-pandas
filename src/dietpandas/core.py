@@ -38,7 +38,7 @@ def optimize_int(series: pd.Series) -> pd.Series:
     # Early exit: already optimal
     if series.dtype in [np.uint8, np.int8]:
         return series
-    
+
     c_min, c_max = series.min(), series.max()
 
     # Check if unsigned is possible (positive numbers only)
@@ -242,7 +242,7 @@ def optimize_bool(series: pd.Series) -> pd.Series:
                         mapping[val] = False
                         mapping[val.upper()] = False
                         mapping[val.capitalize()] = False
-                    
+
                     # Use vectorized str operations
                     bool_series = series.str.lower().map(mapping)
                     return bool_series.astype("boolean")
@@ -537,15 +537,14 @@ def diet(
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all column optimization tasks
             future_to_col = {
-                executor.submit(optimize_func, col, df[col].copy()): col 
-                for col in df.columns
+                executor.submit(optimize_func, col, df[col].copy()): col for col in df.columns
             }
 
             # Collect results as they complete
             for future in as_completed(future_to_col):
                 col, optimized_series, warning = future.result()
                 df[col] = optimized_series
-                
+
                 # Emit warnings if any
                 if warning:
                     warnings.warn(warning[0], warning[1], stacklevel=2)
@@ -568,7 +567,7 @@ def diet(
                 warn_on_issues=warn_on_issues,
             )
             df[col] = optimized_series
-            
+
             # Emit warnings if any
             if warning:
                 warnings.warn(warning[0], warning[1], stacklevel=2)

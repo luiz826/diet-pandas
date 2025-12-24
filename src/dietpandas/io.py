@@ -36,7 +36,7 @@ def _estimate_csv_memory_mb(filepath: Union[str, Path]) -> float:
         return (file_size_bytes * 2) / (1024**2)
     except OSError:
         # If file size cannot be determined, return conservative estimate
-        return float('inf')
+        return float("inf")
 
 
 def read_csv(
