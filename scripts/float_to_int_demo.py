@@ -32,15 +32,16 @@ def main():
 
     print(f"\nOptimized dtypes:\n{df1_optimized.dtypes}")
     print(f"Optimized memory: {df1_optimized.memory_usage(deep=True).sum() / 1024:.2f} KB")
-    print(
-        "\n✓ Notice: 'year' and 'count' converted to integers, 'temperature' stays float32"
-    )
+    print("\n✓ Notice: 'year' and 'count' converted to integers, 'temperature' stays float32")
 
     # Example 2: Float with NaN values
     print("\n" + "=" * 60)
     print("\n2. Float column with whole numbers and NaN:")
     df2 = pd.DataFrame(
-        {"ratings": [5.0, 4.0, np.nan, 3.0, 5.0, np.nan, 4.0], "scores": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0]}
+        {
+            "ratings": [5.0, 4.0, np.nan, 3.0, 5.0, np.nan, 4.0],
+            "scores": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
+        }
     )
 
     print("\nOriginal DataFrame:")
@@ -69,7 +70,7 @@ def main():
     # Example 4: Memory savings comparison
     print("\n" + "=" * 60)
     print("\n4. Memory savings on large dataset:")
-    
+
     # Create large DataFrame with float IDs (common in datasets)
     n = 100_000
     df4 = pd.DataFrame(
@@ -85,7 +86,7 @@ def main():
     print(f"Original dtypes:\n{df4.dtypes}")
 
     df4_optimized = dp.diet(df4, verbose=False, float_to_int=True)
-    
+
     optimized_memory = df4_optimized.memory_usage(deep=True).sum() / 1024 / 1024
     reduction = ((original_memory - optimized_memory) / original_memory) * 100
 

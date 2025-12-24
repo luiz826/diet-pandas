@@ -585,14 +585,16 @@ class TestFloatToInt:
 
     def test_diet_float_to_int_integration(self):
         """Test float-to-int conversion in full diet function."""
-        df = pd.DataFrame({
-            "whole_floats": [1.0, 2.0, 3.0, 4.0],
-            "decimal_floats": [1.5, 2.5, 3.5, 4.5],
-            "mixed": [1.0, 2.0, 3.0, 4.0]
-        })
-        
+        df = pd.DataFrame(
+            {
+                "whole_floats": [1.0, 2.0, 3.0, 4.0],
+                "decimal_floats": [1.5, 2.5, 3.5, 4.5],
+                "mixed": [1.0, 2.0, 3.0, 4.0],
+            }
+        )
+
         result = diet(df, verbose=False, float_to_int=True)
-        
+
         # whole_floats should be converted to int
         assert np.issubdtype(result["whole_floats"].dtype, np.integer)
         # decimal_floats should remain float
@@ -602,25 +604,21 @@ class TestFloatToInt:
 
     def test_diet_disable_float_to_int(self):
         """Test that float_to_int conversion can be disabled in diet."""
-        df = pd.DataFrame({
-            "whole_floats": [1.0, 2.0, 3.0, 4.0]
-        })
-        
+        df = pd.DataFrame({"whole_floats": [1.0, 2.0, 3.0, 4.0]})
+
         result = diet(df, verbose=False, float_to_int=False)
-        
+
         # Should remain float (float32)
         assert result["whole_floats"].dtype == np.float32
 
     def test_float_to_int_memory_savings(self):
         """Test that float-to-int conversion reduces memory."""
-        df = pd.DataFrame({
-            "float_col": [float(i) for i in range(1000)]
-        })
-        
+        df = pd.DataFrame({"float_col": [float(i) for i in range(1000)]})
+
         original_memory = df.memory_usage(deep=True).sum()
         result = diet(df, verbose=False, float_to_int=True)
         optimized_memory = result.memory_usage(deep=True).sum()
-        
+
         # Should reduce memory (float64 -> smaller int type)
         assert optimized_memory < original_memory
 

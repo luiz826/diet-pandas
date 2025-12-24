@@ -89,18 +89,18 @@ def optimize_float(
     if float_to_int:
         # Check if series contains only integer values (excluding NaN)
         is_integer = series.dropna().apply(lambda x: x == int(x)).all()
-        
+
         if is_integer:
             has_na = series.isna().any()
-            
+
             if has_na:
                 # Use nullable integer type to preserve NaN
                 # First convert to Int64, then optimize to smaller nullable int
                 int_series = series.astype("Int64")
-                
+
                 # Manually optimize nullable integers
                 c_min, c_max = int_series.min(), int_series.max()
-                
+
                 if c_min >= 0:
                     if c_max <= np.iinfo(np.uint8).max:
                         return int_series.astype("UInt8")
@@ -122,7 +122,7 @@ def optimize_float(
                 int_series = series.astype(np.int64)
                 # Now optimize the integer series
                 return optimize_int(int_series)
-    
+
     # If not convertible to int, optimize as float
     if aggressive:
         # Keto mode: Maximum compression
@@ -350,7 +350,8 @@ def diet(
     This function iterates over all columns and applies appropriate optimizations:
     - Booleans: Convert integer/object columns with boolean values to bool dtype
     - Integers: Downcast to smallest safe type (int8, int16, uint8, etc.)
-    - Floats: Convert to integers if they contain only whole numbers, else float32 (or float16 in aggressive mode)
+    - Floats: Convert to integers if they contain only whole numbers, else
+      float32 (or float16 in aggressive mode)
     - Objects: Convert to category if cardinality is low
     - DateTime: Optimize datetime representations
     - Sparse: Convert to sparse arrays for columns with many repeated values
@@ -362,9 +363,12 @@ def diet(
         categorical_threshold: Threshold for converting objects to categories
         sparse_threshold: Threshold for converting to sparse format (default: 0.9)
         optimize_datetimes: If True, optimize datetime columns (default: True)
-        optimize_sparse_cols: If True, check for sparse optimization opportunities (default: False)
-        optimize_bools: If True, convert boolean-like columns to bool dtype (default: True)
-        float_to_int: If True, convert float columns to integers when they contain only whole numbers (default: True)
+        optimize_sparse_cols: If True, check for sparse optimization
+            opportunities (default: False)
+        optimize_bools: If True, convert boolean-like columns to bool dtype
+            (default: True)
+        float_to_int: If True, convert float columns to integers when they
+            contain only whole numbers (default: True)
         inplace: If True, modify the DataFrame in place (default: False)
         skip_columns: List of column names to skip optimization (default: None)
         force_categorical: List of column names to force categorical conversion (default: None)
