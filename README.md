@@ -371,9 +371,33 @@ df = dp.read_csv("PARTICIPANTES_2024.csv", sep=";")
 
 - ⚠️ **Tiny datasets (<10 MB)** - Optimization overhead not worth it
 - ⚠️ **One-time read-and-aggregate** - Won't query data multiple times
-- ⚠️ **Already optimized data** - Parquet files, pre-processed DataFrames
 - ⚠️ **Time-critical ETL** - Where 2-3x load time matters more than memory
 - ⚠️ **Unlimited RAM available** - Cloud instances with 128+ GB RAM
+
+### Parquet Files: Special Case
+
+**Parquet helps with disk space, diet-pandas helps with RAM usage:**
+
+```python
+# Scenario 1: Parquet from unoptimized data (COMMON)
+df = pd.read_parquet('data.parquet')  # int64, object types
+# In memory: 1800 MB
+df_optimized = dp.diet(df)
+# In memory: 500 MB ✓ 72% reduction still possible!
+
+# Scenario 2: Parquet from already-optimized data (BEST)
+df = dp.read_csv('data.csv')  # Already optimized
+df.to_parquet('optimized.parquet')  # Saves efficient types
+# Future reads already optimal ✓
+```
+
+**When to use with Parquet:**
+- ✅ Parquet created from raw/unoptimized data (most cases)
+- ✅ Need to reduce in-memory usage during analysis
+- ✅ Not sure if original DataFrame was optimized
+- ❌ You optimized before saving to Parquet (already efficient)
+
+**Pro tip:** Optimize THEN save to Parquet for best results!
 
 ### Trade-offs to Understand:
 
