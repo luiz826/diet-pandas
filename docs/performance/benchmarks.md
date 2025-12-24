@@ -2,6 +2,70 @@
 
 Real-world performance results demonstrating Diet Pandas' memory reduction and speed improvements.
 
+## ⚡ v0.5.0 Performance Improvements
+
+**NEW:** Parallel processing provides 2-4x speedup on multi-core systems!
+
+```python
+import dietpandas as dp
+
+# 50 columns × 1M rows
+df = dp.read_csv("large_data.csv")
+
+# v0.4.0 (sequential): ~2.3 seconds
+# v0.5.0 (parallel): ~0.6 seconds
+# 3.8x faster on 8-core system!
+```
+
+## Real-World Benchmarks
+
+### NYC Taxi Dataset (12.7M rows)
+
+**File:** yellow_tripdata_2015-01.csv  
+**Size:** 1.85 GB (CSV), 12,748,986 rows, 19 columns
+
+| Metric | Standard Pandas | Diet Pandas v0.5.0 | Improvement |
+|--------|----------------|-------------------|-------------|
+| **Memory Usage** | 3,818 MB | 1,199 MB | **68.6% reduction** |
+| **Memory Saved** | — | **2,618 MB** | **2.6 GB freed!** |
+| **Load Time** | 11.28 sec | 40.66 sec | Trade-off for memory* |
+
+*Worth it for memory-constrained environments
+
+**Top optimizations:**
+- `store_and_fwd_flag`: 96.0% reduction (584 MB → 24 MB)
+- DateTime columns: 67% reduction each (555 MB saved per column)
+- Integer columns: 87.5% reduction (85 MB saved per column)
+- Float columns: 50% reduction (float64 → float32)
+
+### ENEM 2024 Dataset (4.3M students)
+
+**Brazilian National Exam** - Real government data
+
+#### RESULTADOS_2024.csv
+- **Rows:** 4,332,944
+- **Columns:** 42
+- **File Size:** 1,605 MB
+
+| Metric | Pandas | Diet Pandas | Improvement |
+|--------|--------|-------------|-------------|
+| **Load Time** | 17.31 sec | 32.99 sec | 1.9x slower* |
+| **Memory Usage** | 4,349 MB | 1,623 MB | **62.7% reduction** |
+| **Memory Saved** | — | **2,726 MB** | **2.7 GB saved!** |
+
+#### PARTICIPANTES_2024.csv
+- **Rows:** 4,332,944
+- **Columns:** 38
+- **File Size:** 441 MB
+
+| Metric | Pandas | Diet Pandas | Improvement |
+|--------|--------|-------------|-------------|
+| **Load Time** | 6.34 sec | 15.91 sec | 2.5x slower* |
+| **Memory Usage** | 5,663 MB | 215 MB | **96.2% reduction!** |
+| **Memory Saved** | — | **5,448 MB** | **5.4 GB saved!** |
+
+**Why 96% reduction?** Brazilian geographic data (states, cities) with high repetition - perfect for categorical optimization.
+
 ## Memory Reduction Benchmarks
 
 ### Synthetic Dataset Results
