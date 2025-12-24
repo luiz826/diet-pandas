@@ -1,6 +1,6 @@
 # NYC Taxi Data Benchmark Results
 
-**Date:** 2025-12-24 01:04:05
+**Date:** 2025-12-24 02:39:08
 
 **Dataset:** NYC Yellow Taxi Trip Records
 
@@ -27,9 +27,9 @@
 - **Saved: 2,618.42 MB (68.6% reduction)**
 
 **Load Time:**
-- Standard: 12.45s
-- Optimized: 45.39s
-- Overhead: 264.5%
+- Standard: 11.28s
+- Optimized: 40.66s
+- Overhead: 260.4%
 
 **Top Column Optimizations:**
 
@@ -56,9 +56,9 @@
 - **Saved: 2,184.74 MB (66.9% reduction)**
 
 **Load Time:**
-- Standard: 8.15s
-- Optimized: 32.93s
-- Overhead: 304.3%
+- Standard: 8.14s
+- Optimized: 29.59s
+- Overhead: 263.8%
 
 **Top Column Optimizations:**
 
@@ -85,9 +85,9 @@
 - **Saved: 2,307.95 MB (67.7% reduction)**
 
 **Load Time:**
-- Standard: 8.53s
-- Optimized: 33.82s
-- Overhead: 296.5%
+- Standard: 8.36s
+- Optimized: 30.46s
+- Overhead: 264.2%
 
 **Top Column Optimizations:**
 
@@ -114,9 +114,9 @@
 - **Saved: 2,485.97 MB (68.0% reduction)**
 
 **Load Time:**
-- Standard: 9.31s
-- Optimized: 36.72s
-- Overhead: 294.5%
+- Standard: 8.98s
+- Optimized: 33.14s
+- Overhead: 269.2%
 
 **Top Column Optimizations:**
 
@@ -147,9 +147,9 @@
 
 ### Load Time
 
-- **Standard:** 55.37s
-- **Optimized:** 121.85s
-- **Overhead:** 120.1%
+- **Standard:** 54.10s
+- **Optimized:** 111.31s
+- **Overhead:** 105.8%
 
 ### Top Column Optimizations
 

@@ -39,8 +39,10 @@ df_light = dp.diet(df_heavy)
 
 ## ✨ Key Features
 
+- **⚡ Parallel Processing** *(NEW in v0.5.0)*: Multi-threaded optimization for 2-4x speedup
 - **🏃 Fast Loading**: Uses Polars engine for 5-10x faster CSV parsing
 - **🎯 Smart Optimization**: Automatically downcasts numeric types to smallest safe representation
+- **🚀 Vectorized Boolean Detection** *(NEW in v0.5.0)*: Lightning-fast boolean column optimization
 - **🗜️ Sparse Support**: Optimizes columns with many repeated values (95%+ reduction)
 - **📅 DateTime Handling**: Efficient datetime column optimization
 - **📊 Multiple Formats**: CSV, Parquet, Excel, JSON, HDF5, Feather

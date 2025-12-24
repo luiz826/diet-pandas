@@ -8,6 +8,8 @@ This page documents all core optimization functions in Diet Pandas.
 
 Optimize a pandas DataFrame by downcasting data types to reduce memory usage.
 
+**NEW in v0.5.0:** Supports parallel processing with `parallel` and `max_workers` parameters for 2-4x speedup.
+
 ::: dietpandas.core.diet
     options:
       show_root_heading: true
@@ -20,7 +22,18 @@ import dietpandas as dp
 import pandas as pd
 
 df = pd.DataFrame({'col': [1, 2, 3]})
+
+# Standard optimization
 df_optimized = dp.diet(df)
+
+# Parallel processing (default, 2-4x faster)
+df_optimized = dp.diet(df, parallel=True)
+
+# Control number of threads
+df_optimized = dp.diet(df, parallel=True, max_workers=4)
+
+# Sequential processing
+df_optimized = dp.diet(df, parallel=False)
 ```
 
 ---

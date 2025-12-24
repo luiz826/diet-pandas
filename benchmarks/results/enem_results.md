@@ -5,13 +5,13 @@
 **Source:** INEP - Brazilian Ministry of Education  
 **Total Participants:** 4,332,944 students  
 **System:** MacBook Pro, Python 3.13  
-**Diet Pandas Version:** 0.4.0
+**Diet Pandas Version:** 0.5.0 (with parallel processing)
 
 ---
 
 ## Executive Summary
 
-Diet-pandas achieved **62.7% to 96.2% memory reduction** on real-world ENEM data with 4.3 million rows, saving between **2.7 GB to 5.4 GB of RAM** per file.
+Diet-pandas achieved **62.7% to 96.2% memory reduction** on real-world ENEM data with 4.3 million rows, saving between **2.7 GB to 5.4 GB of RAM** per file. With the new v0.5.0 parallel processing, optimization is now significantly faster on multi-core systems.
 
 ---
 
@@ -37,7 +37,7 @@ Diet-pandas achieved **62.7% to 96.2% memory reduction** on real-world ENEM data
 
 | Metric | Pandas | Diet-Pandas | Improvement |
 |--------|--------|-------------|-------------|
-| **Load Time** | 17.24 sec | 35.57 sec | 2.1x slower* |
+| **Load Time** | 17.31 sec | 32.99 sec | 1.9x slower* |
 | **Memory Usage** | 4,349 MB | 1,623 MB | **62.7% reduction** |
 | **Memory Saved** | — | **2,726 MB** | **2.7 GB saved!** |
 
@@ -47,7 +47,7 @@ Diet-pandas achieved **62.7% to 96.2% memory reduction** on real-world ENEM data
 
 | Metric | Pandas | Diet-Pandas | Improvement |
 |--------|--------|-------------|-------------|
-| **Load Time** | 6.31 sec | 17.18 sec | 2.7x slower* |
+| **Load Time** | 6.34 sec | 15.91 sec | 2.5x slower* |
 | **Memory Usage** | 5,663 MB | 215 MB | **96.2% reduction** |
 | **Memory Saved** | — | **5,448 MB** | **5.4 GB saved!** |
 

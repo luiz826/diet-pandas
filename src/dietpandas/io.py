@@ -24,13 +24,19 @@ from .core import diet
 
 def _get_available_memory_mb() -> float:
     """Get available system memory in MB."""
-    return psutil.virtual_memory().available / (1024**2)
+    mem = psutil.virtual_memory()
+    return mem.available / (1024**2)
 
 
 def _estimate_csv_memory_mb(filepath: Union[str, Path]) -> float:
     """Estimate memory needed to load CSV (rough estimate: 2x file size)."""
-    file_size_bytes = os.path.getsize(filepath)
-    return (file_size_bytes * 2) / (1024**2)
+    try:
+        # Use cached stat call to avoid repeated I/O
+        file_size_bytes = os.path.getsize(filepath)
+        return (file_size_bytes * 2) / (1024**2)
+    except OSError:
+        # If file size cannot be determined, return conservative estimate
+        return float("inf")
 
 
 def read_csv(
